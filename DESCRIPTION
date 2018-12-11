@@ -1,0 +1,28 @@
+Package: MGPMMammals
+Type: Package
+Title: A Mixed Gaussian Phylogenetic Model of the Brain-Body Mass Allometry in Mammals
+Version: 0.1.0
+Authors@R: c(person("Venelin", "Mitov", email = "vmitov@gmail.com",
+                 role = c("aut", "cre", "cph")))
+Maintainer: Venelin Mitov <vmitov@gmail.com>
+Description: Wraps the code and fitted models of the mammal data analysis for 
+  the research article entitled "Automatic Generation of Evolutionary Hypotheses 
+  using Mixed Gaussian Phylogenetic Models".
+Encoding: UTF-8
+License: GPL (>= 3.0)
+LazyData: true
+Depends:
+    R (>= 3.1.0),
+Imports:
+    PCMBase,
+    data.table,
+    readxl,
+    ape
+Suggests:
+    testthat,
+    knitr,
+    rmarkdown,
+    covr
+URL: https://github.com/venelin/MGPMMammals, https://venelin.github.io/MGPMMammals/
+BugReports: https://github.com/venelin/MGPMMammals/issues
+RoxygenNote: 6.1.1
