@@ -1,3 +1,10 @@
-^data-raw$
+^data-raw/Results$
+^data-raw/.*\.pdf$
+^data-raw/.*\.html$
+^data-raw/.*\.xlsx$
+^data-raw/.*\.bib$
+^data-raw/.*\.rda$
+^data-raw/.*\.RData$
+^data-raw/.*\.txt$
 ^.*\.Rproj$
 ^\.Rproj\.user$
