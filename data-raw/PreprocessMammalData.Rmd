@@ -11,7 +11,7 @@ bibliography: REFERENCES.bib
 ---
 
 ```{css, echo=FALSE}
-.main-container { width: 1800px; max-width:3600px;}
+.main-container { width: 2000px; max-width:4000px;}
 pre code, pre, code {
   white-space: pre !important;
   overflow-x: scroll !important;
@@ -29,7 +29,7 @@ library(ggplot2)
 library(cowplot)
 
 knitr::opts_chunk$set(echo = TRUE, size = "small")
-options(width = 1800)
+options(width = 2000)
 options(digits = 4)
 ```
 
@@ -290,7 +290,7 @@ data.BoddyEtAl.2[!is.na(No..Individuals), median(No..Individuals)]
 
 Assign the medians to the corresponding unknown values:
 
-```{r}
+```{r, eval=TRUE}
 data.BoddyEtAl.2[is.na(No..Individuals), Notes:=paste(Notes, "; Mitov: Inferred No..Individuals - median from the present No..Individuals for the corresponding value of Sex.")]
 data.BoddyEtAl.2[is.na(No..Individuals) & is.na(Sex), No..Individuals:=1L]
 data.BoddyEtAl.2[is.na(No..Individuals) & Sex == "F", No..Individuals:=1L]
@@ -456,8 +456,7 @@ data.BoddyEtAl.2 <- rbindlist(
            Order = unique(Order),
            i = list(i)),
       keyby = SpeciesName2],
-    data.BoddyEtAl.2[
-      !(No..Individuals == 1),
+    data.BoddyEtAl.2[sapply(No..Individuals, function(noi) is.na(noi) || noi != 1),
       list(SpeciesName2, 
            Brain.Mass..g.,
            Brain.Mass.SD,
@@ -474,7 +473,6 @@ data.BoddyEtAl.2 <- rbindlist(
 )
 ```
 
-## Linear regression of the missing SDs
 
 ```{r}
 data.BoddyEtAl.2[, sum(!is.na(Brain.Mass.SD) & !is.na(Body.Mass.SD))]
@@ -483,159 +481,13 @@ data.BoddyEtAl.2[, sum(is.na(Brain.Mass.SD) & !is.na(Body.Mass.SD))]
 data.BoddyEtAl.2[, sum(is.na(Brain.Mass.SD) & is.na(Body.Mass.SD))]
 ```
 
-### Linear regressions of brain-mass SD on brain mass and body variables
-
-```{r}
-lm.Brain.SD.a <- data.BoddyEtAl.2[
-  !is.na(Brain.Mass.SD) & !is.na(Body.Mass.SD) & Brain.Mass.SD <= 2000, 
-  lm(Brain.Mass.SD ~ 0 + Brain.Mass..g. + Body.Mass.SD)]
-lm.Brain.SD.b <- data.BoddyEtAl.2[
-  !is.na(Brain.Mass.SD) & Brain.Mass.SD <= 2000, 
-  lm(Brain.Mass.SD ~ 0 + Brain.Mass..g. + Body.Mass..g.)]
-lm.Brain.SD.c <- data.BoddyEtAl.2[
-  !is.na(Brain.Mass.SD) & Brain.Mass.SD <= 2000, 
-  lm(Brain.Mass.SD ~ 0 + Brain.Mass..g.)]
-
-summary(lm.Brain.SD.a)
-summary(lm.Brain.SD.b)
-summary(lm.Brain.SD.c)
-```
-
-### Linear regressions of body mass SD on body mass and brain variables
-```{r}
-lm.Body.SD.a <- data.BoddyEtAl.2[
-  !is.na(Body.Mass.SD) & !is.na(Brain.Mass.SD) & Body.Mass.SD <= 2000000, 
-  lm(Body.Mass.SD ~ 0 + Body.Mass..g. + Brain.Mass.SD)]
-lm.Body.SD.b <- data.BoddyEtAl.2[
-  !is.na(Body.Mass.SD) & Body.Mass.SD <= 2000000, 
-  lm(Body.Mass.SD ~ 0 + Body.Mass..g. + Brain.Mass..g.)]
-lm.Body.SD.c <- data.BoddyEtAl.2[
-  !is.na(Body.Mass.SD) & Body.Mass.SD <= 2000000, 
-  lm(Body.Mass.SD ~ 0 + Body.Mass..g.)]
-
-summary(lm.Body.SD.a)
-summary(lm.Body.SD.b)
-summary(lm.Body.SD.c)
-```
-
-
-In the above linear regressions, we excluded one data point having Brain.Mass.SD > 2000 and one data point having Body.Mass.SD > 2000000, because these data-points were apparently outliers. Including these data-point in the 
-models resulted in lower values for $R_{adj}^2$.
-
-
-The model lm.Body.SD.c has been chosen for inferring the missing Body.Mass.SD:
-```{r}
-data.BoddyEtAl.2[is.na(Body.Mass.SD), 
-                 Notes:=paste(Notes, "; Mitov: Body.Mass.SD inferred from Body.Mass..g. using linear regression", sep="; ")]
-data.BoddyEtAl.2[is.na(Body.Mass.SD), 
-                 Body.Mass.SD:={
-                   coefs <- coef(lm.Body.SD.c)
-                   coefs[1]*Body.Mass..g.
-                 }]
-
-```
-
-The model lm.Brain.SD.a has the highest $R_{adj}^2$ (0.91). Therefore, we choose lm.Brain.SD.a as a model to infer the missingBrain.Mass.SD values. We note that this model is be applied to all missing entries after inferring all missing Body.Mass.SDs based on the omnipresent Body.Mass..g.-values. 
-
-```{r}
-data.BoddyEtAl.2[is.na(Brain.Mass.SD), 
-                 Notes:=paste(Notes, "; Mitov: Brain.Mass.SD inferred from Brain.Mass..g. and Body.Mass.SD using linear regression", sep="; ")]
-
-data.BoddyEtAl.2[is.na(Brain.Mass.SD), 
-                 Brain.Mass.SD:={
-                   coefs <- coef(lm.Brain.SD.a)
-                   coefs[1]*Brain.Mass..g. + coefs[2]*Body.Mass.SD
-                 } ]
-```
-
-A plot of the observed and the inferred SD-values:
-```{r, fig.width=16, fig.height=8}
-# introduce these two columns for the coloring 
-data.BoddyEtAl.2[, inferred.Brain.SD:=FALSE]
-data.BoddyEtAl.2[grep("Brain.Mass.SD inferred", Notes), inferred.Brain.SD:=TRUE]
-
-data.BoddyEtAl.2[, inferred.Body.SD:=FALSE]
-data.BoddyEtAl.2[grep("Body.Mass.SD inferred", Notes), inferred.Body.SD:=TRUE]
-
-pl.Brain <- data.BoddyEtAl.2[
-  , 
-  ggplot() +
-    geom_point(aes(x = Brain.Mass..g., 
-                   y = Brain.Mass.SD, 
-                   colour = inferred.Brain.SD, 
-                   shape = inferred.Brain.SD), alpha = 0.8) +
-    geom_abline(slope = coef(lm.Brain.SD.c)[1], 
-                colour = PCMColorPalette(2, letters[1:2])[2]) +
-    scale_x_continuous(limits = c(0, max(Brain.Mass..g.))) +
-    scale_y_continuous(limits = c(0, max(Brain.Mass..g.))) +
-    theme_grey()]
-
-pl.Body <- data.BoddyEtAl.2[
-  , 
-  ggplot() +
-    geom_point(aes(x = Body.Mass..g., 
-                   y = Body.Mass.SD, 
-                   colour = inferred.Body.SD, 
-                   shape = inferred.Body.SD), alpha = 0.8) +
-    geom_abline(slope = coef(lm.Body.SD.c)[1], 
-                colour = PCMColorPalette(2, letters[1:2])[2]) +
-    scale_x_continuous(limits = c(0, max(Body.Mass..g.))) +
-    scale_y_continuous(limits = c(0, max(Body.Mass..g.))) +
-    theme_grey()]
-
-plot_grid(pl.Brain, pl.Body)
-```
-
-
 ## Calculating the non-combined SEs 
 ```{r}
 data.BoddyEtAl.2[, Brain.Mass.SE:=Brain.Mass.SD / sqrt(No..Individuals)]
 data.BoddyEtAl.2[, Body.Mass.SE:=Body.Mass.SD / sqrt(No..Individuals)]
 ```
 
-### Linear models of the SEs 
-
-```{r}
-lm.Brain.SE.a <- data.BoddyEtAl.2[
-  setdiff(seq_len(.N), grep("Brain.Mass.SD inferred", Notes))][
-    Brain.Mass.SE * sqrt(No..Individuals) <= 2000,
-    lm(Brain.Mass.SE~0+Brain.Mass..g.+Body.Mass.SE)]
-lm.Brain.SE.b <- data.BoddyEtAl.2[
-  setdiff(seq_len(.N), grep("Brain.Mass.SD inferred", Notes))][
-    Brain.Mass.SE * sqrt(No..Individuals) <= 2000,
-    lm(Brain.Mass.SE~0+Brain.Mass..g.+Body.Mass..g.)]
-lm.Brain.SE.c <- data.BoddyEtAl.2[
-  setdiff(seq_len(.N), grep("Brain.Mass.SD inferred", Notes))][
-    Brain.Mass.SE * sqrt(No..Individuals) <= 2000,
-    lm(Brain.Mass.SE~0+Brain.Mass..g.)]
-
-
-summary(lm.Brain.SE.a)
-summary(lm.Brain.SE.b)
-summary(lm.Brain.SE.c)
-```
-
-```{r}
-lm.Body.SE.a <- data.BoddyEtAl.2[
-  setdiff(seq_len(.N), grep("Body.Mass.SD inferred", Notes))][
-    Body.Mass.SE * sqrt(No..Individuals) <= 2000000,
-    lm(Body.Mass.SE~0+Body.Mass..g.+Brain.Mass.SE)]
-lm.Body.SE.b <- data.BoddyEtAl.2[
-  setdiff(seq_len(.N), grep("Body.Mass.SD inferred", Notes))][
-    Body.Mass.SE * sqrt(No..Individuals) <= 2000000,
-    lm(Body.Mass.SE~0+Body.Mass..g.+Brain.Mass..g.)]
-lm.Body.SE.c <- data.BoddyEtAl.2[
-  setdiff(seq_len(.N), grep("Body.Mass.SD inferred", Notes))][
-    Body.Mass.SE * sqrt(No..Individuals) <= 2000000,
-    lm(Body.Mass.SE~0+Body.Mass..g.)]
-
-
-summary(lm.Body.SE.a)
-summary(lm.Body.SE.b)
-summary(lm.Body.SE.c)
-```
-
-## Calculating the brain and body mass weighted means and combined standard errors
+## Calculating the brain and body mass means and combined standard errors
 
 [@Baker:1963nat] derived a formula for calculating the combined standard error from the standard errors, the means and the counts of two samples:
 
@@ -658,7 +510,9 @@ comb.se.add1 <- function(m1, n1, e1, Xn) {
 }
 
 comb.se <- function(m1, n1, e1, m2, n2, e2) {
-  if(n1 <= 1 && n2 <= 1) {
+  if(is.na(n1) || is.na(n2) || is.na(m1) || is.na(m2) || is.na(e1) || is.na(e2)) {
+    as.double(NA)
+  } else if(n1 <= 1 && n2 <= 1) {
     as.double(NA)
   } else if(n1 > 1 && n2 == 1) {
     comb.se.add1(m1, n1, e1, m2)
@@ -695,16 +549,21 @@ comb.se.vec <- function(m, n, e) {
 ```{r}
 data.BoddyEtAl.2 <- data.BoddyEtAl.2[
   , {
+    weights <- No..Individuals 
+    
+    # weights <- rep(1, .N)
+    # i.groupOfOnes <- grep("Mitov: combining entries with No..Individuals == 1", Notes)
+    # if(length(i.groupOfOnes) > 0) {
+    #   weights[i.groupOfOnes] <- No..Individuals[i.groupOfOnes]
+    # }
     list(
-      Brain.Mass..g. = sum(Brain.Mass..g. * No..Individuals) / sum(No..Individuals),
-      # Brain.Mass..g. = mean(Brain.Mass..g.),
+      Brain.Mass..g. = sum(Brain.Mass..g. * weights) / sum(weights),
       Brain.Mass.SE = comb.se.vec(Brain.Mass..g., 
-                                  No..Individuals, 
+                                  weights,
                                   Brain.Mass.SE),
-      Body.Mass..g. = sum(Body.Mass..g. * No..Individuals) / sum(No..Individuals),
-      # Body.Mass..g. = mean(Body.Mass..g.),
+      Body.Mass..g. = sum(Body.Mass..g. * weights) / sum(weights),
       Body.Mass.SE = comb.se.vec(Body.Mass..g., 
-                                 No..Individuals, 
+                                 weights,
                                  Body.Mass.SE),
       Sex = 
         if(length(unique(Sex[!is.na(Sex)])) == 0) {
@@ -718,7 +577,7 @@ data.BoddyEtAl.2 <- data.BoddyEtAl.2[
       Source = do.call(paste, c(as.list(unique(Source)), sep = "; ")), 
       Notes = ifelse(.N > 1, 
                      paste(do.call(paste, c(as.list(unique(Notes)), sep=";")), 
-                           paste0("; Mitov: combined standard error for ", .N, 
+                           paste0("; Mitov: combined Brain.Mass.SE and Body.Mass.SE for ", .N, 
                                   " groups within the same species.")),
                      do.call(paste, 
                              c(as.list(unique(Notes)), sep = ";"))),
@@ -729,7 +588,7 @@ data.BoddyEtAl.2 <- data.BoddyEtAl.2[
 data.BoddyEtAl.2
 ```
 
-### Updated linear models of the SEs after combining SEs from different groups within the same species
+### Linear models of the SEs after combining SEs from different groups within the same species
 
 ```{r}
 lm.Brain.SE.a <- data.BoddyEtAl.2[
@@ -758,129 +617,59 @@ summary(lm.Body.SE.a)
 summary(lm.Body.SE.b)
 summary(lm.Body.SE.c)
 ```
-
-```{r}
-lm.Brain.SE.a <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Brain.Mass.SD inferred|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-          Brain.Mass.SE*sqrt(No..Individuals) <= 2000,
-          lm(Brain.Mass.SE~0+Brain.Mass..g.+Body.Mass.SE)]
-lm.Brain.SE.b <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Brain.Mass.SD inferred|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-                  Brain.Mass.SE*sqrt(No..Individuals) <= 2000,
-                  lm(Brain.Mass.SE~0+Brain.Mass..g.+Body.Mass..g.)]
-lm.Brain.SE.c <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Brain.Mass.SD inferred|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-                  Brain.Mass.SE*sqrt(No..Individuals) <= 2000,
-                  lm(Brain.Mass.SE~0+Brain.Mass..g.)]
-lm.Body.SE.a <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Brain.Mass.SD inferred|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-                  Body.Mass.SE*sqrt(No..Individuals) <= 2000000, 
-                  lm(Body.Mass.SE~0+Body.Mass..g.+Brain.Mass.SE)]
-lm.Body.SE.b <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Brain.Mass.SD inferred|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-                  Body.Mass.SE*sqrt(No..Individuals) <= 2000000, 
-                  lm(Body.Mass.SE~0+Body.Mass..g.+Brain.Mass..g.)]
-lm.Body.SE.c <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Brain.Mass.SD inferred|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-                  Body.Mass.SE*sqrt(No..Individuals) <= 2000000, 
-                  lm(Body.Mass.SE~0+Body.Mass..g.)]
-
-summary(lm.Brain.SE.a)
-summary(lm.Brain.SE.b)
-summary(lm.Brain.SE.c)
-summary(lm.Body.SE.a)
-summary(lm.Body.SE.b)
-summary(lm.Body.SE.c)
-```
-
-
-```{r}
-lm.Brain.SE.a <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-    Brain.Mass.SE*sqrt(No..Individuals) <= 2000,
-    lm(Brain.Mass.SE~0+Brain.Mass..g.+Body.Mass.SE)]
-lm.Brain.SE.b <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-    Brain.Mass.SE*sqrt(No..Individuals) <= 2000,
-    lm(Brain.Mass.SE~0+Brain.Mass..g.+Body.Mass..g.)]
-lm.Brain.SE.c <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-    Brain.Mass.SE*sqrt(No..Individuals) <= 2000,
-    lm(Brain.Mass.SE~0+Brain.Mass..g.)]
-lm.Body.SE.a <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-    Body.Mass.SE*sqrt(No..Individuals) <= 2000000, 
-    lm(Body.Mass.SE~0+Body.Mass..g.+Brain.Mass.SE)]
-lm.Body.SE.b <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-    Body.Mass.SE*sqrt(No..Individuals) <= 2000000, 
-    lm(Body.Mass.SE~0+Body.Mass..g.+Brain.Mass..g.)]
-lm.Body.SE.c <- data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Body.Mass.SD inferred", 
-       Notes, invert = TRUE)][
-    Body.Mass.SE*sqrt(No..Individuals) <= 2000000, 
-    lm(Body.Mass.SE~0+Body.Mass..g.)]
-
-summary(lm.Brain.SE.a)
-summary(lm.Brain.SE.b)
-summary(lm.Brain.SE.c)
-summary(lm.Body.SE.a)
-summary(lm.Body.SE.b)
-summary(lm.Body.SE.c)
-```
-
-
-
 
 ### Inferring the SEs using the linear models
+In the above linear regressions, we excluded one data point having Brain.Mass.SD > 2000 and one data point having Body.Mass.SD > 2000000, because these data-points were apparently outliers (visual analysis). Including these data-point in the 
+models resulted in lower values for $R_{adj}^2$.
 
-We retain the latest fit models lm.Brain.SE.a and lm.Body.SE.c. 
+The model lm.Body.SE.c has been chosen for inferring the missing Body.Mass.SE:
+
+The model lm.Brain.SD.a has the highest $R_{adj}^2$ (0.91). Therefore, we choose lm.Brain.SE.a as a model to infer the missing Brain.Mass.SE values. We note that this model is be applied to all missing entries after inferring all missing Body.Mass.SEs based on the omnipresent Body.Mass..g.-values. 
+
+We retain the models lm.Brain.SE.a and lm.Body.SE.c. 
 
 ```{r}
-data.BoddyEtAl.2[, Brain.Mass.SE.lm:=Brain.Mass.SE]
-data.BoddyEtAl.2[, Body.Mass.SE.lm:=Body.Mass.SE]
+predict.Brain.Mass.SE <- function(Brain.Mass..g., Body.Mass.SE) {
+  coefs <- coef(lm.Brain.SE.a)  
+  coefs[1]*Brain.Mass..g.+coefs[2]*Body.Mass.SE
+}
 
-coefs <- coef(lm.Body.SE.c)
-data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Brain.Mass.SD inferred|Body.Mass.SD inferred", 
-       Notes), 
-  Body.Mass.SE.lm:=coefs[1]*Body.Mass..g.]
+predict.Body.Mass.SE <- function(Body.Mass..g.) {
+  coefs <- coef(lm.Body.SE.c)  
+  coefs[1]*Body.Mass..g.
+}
 
-coefs <- coef(lm.Brain.SE.a)
 data.BoddyEtAl.2[
-  grep("Inferred No..Individuals|Body.Mass.SD inferred", 
-       Notes), 
-  Brain.Mass.SE.lm:=coefs[1]*Brain.Mass..g.+coefs[2]*Body.Mass.SE]
-                              
+  is.na(Body.Mass.SE), 
+  Notes:=paste(Notes, "; Mitov: Body.Mass.SE inferred using model lm.Body.SE.c")]
+data.BoddyEtAl.2[
+  is.na(Body.Mass.SE), 
+  Body.Mass.SE:=predict.Body.Mass.SE(Body.Mass..g.)]
+
+data.BoddyEtAl.2[
+  is.na(Brain.Mass.SE), 
+  Notes:=paste(Notes, "; Mitov: Brain.Mass.SE inferred using model lm.Brain.SE.a")]
+data.BoddyEtAl.2[
+  is.na(Brain.Mass.SE), 
+  Brain.Mass.SE:=predict.Brain.Mass.SE(Brain.Mass..g., Body.Mass.SE)]               
 ```
 
 ### A plot of the observed and inferred standard errors against the brain and body mass weighted means:
-```{r, fig.width=16, fig.height=16}
+```{r, fig.width=16, fig.height=8}
 # introduce these two columns for the coloring 
-data.BoddyEtAl.2[, inferred.Brain.SD:=FALSE]
-data.BoddyEtAl.2[grep("Inferred No..Individuals|Brain.Mass.SD inferred", Notes), inferred.Brain.SD:=TRUE]
+data.BoddyEtAl.2[, inferred.Brain.SE:=FALSE]
+data.BoddyEtAl.2[grep("Brain.Mass.SE inferred", Notes), inferred.Brain.SE:=TRUE]
 
-data.BoddyEtAl.2[, inferred.Body.SD:=FALSE]
-data.BoddyEtAl.2[grep("Inferred No..Individuals|Body.Mass.SD inferred", Notes), inferred.Body.SD:=TRUE]
+data.BoddyEtAl.2[, inferred.Body.SE:=FALSE]
+data.BoddyEtAl.2[grep("Body.Mass.SE inferred", Notes), inferred.Body.SE:=TRUE]
 
 pl.Brain.SE <- data.BoddyEtAl.2[
   , 
   ggplot() +
     geom_point(aes(x = Brain.Mass..g., 
                    y = Brain.Mass.SE, 
-                   colour = inferred.Brain.SD, 
-                   shape = inferred.Brain.SD), alpha = 0.8) +
+                   colour = inferred.Brain.SE, 
+                   shape = inferred.Brain.SE), alpha = 0.8) +
     scale_x_continuous(limits = c(0, max(Brain.Mass..g.))) +
     scale_y_continuous(limits = c(0, max(Brain.Mass..g.))) +
     theme_grey()]
@@ -890,35 +679,13 @@ pl.Body.SE <- data.BoddyEtAl.2[
   ggplot() +
     geom_point(aes(x = Body.Mass..g., 
                    y = Body.Mass.SE, 
-                   colour = inferred.Body.SD, 
-                   shape = inferred.Body.SD), alpha = 0.8) +
+                   colour = inferred.Body.SE, 
+                   shape = inferred.Body.SE), alpha = 0.8) +
     scale_x_continuous(limits = c(0, max(Body.Mass..g.))) +
     scale_y_continuous(limits = c(0, max(Body.Mass..g.))) +
     theme_grey()]
 
-pl.Brain.SE.lm <- data.BoddyEtAl.2[
-  , 
-  ggplot() +
-    geom_point(aes(x = Brain.Mass..g., 
-                   y = Brain.Mass.SE.lm, 
-                   colour = inferred.Brain.SD, 
-                   shape = inferred.Brain.SD), alpha = 0.8) +
-    scale_x_continuous(limits = c(0, max(Brain.Mass..g.))) +
-    scale_y_continuous(limits = c(0, max(Brain.Mass..g.))) +
-    theme_grey()]
-
-pl.Body.SE.lm <- data.BoddyEtAl.2[
-  , 
-  ggplot() +
-    geom_point(aes(x = Body.Mass..g., 
-                   y = Body.Mass.SE.lm, 
-                   colour = inferred.Body.SD, 
-                   shape = inferred.Body.SD), alpha = 0.8) +
-    scale_x_continuous(limits = c(0, max(Body.Mass..g.))) +
-    scale_y_continuous(limits = c(0, max(Body.Mass..g.))) +
-    theme_grey()]
-
-plot_grid(pl.Brain.SE, pl.Body.SE, pl.Brain.SE.lm, pl.Body.SE.lm, nrow = 2, labels = LETTERS[1:4])
+plot_grid(pl.Brain.SE, pl.Body.SE, labels = LETTERS[1:2])
 ```
 
 
@@ -945,7 +712,6 @@ data.BoddyEtAl.2[data.BoddyEtAl.1][
     abs(Body.Mass..g.-`Body Mass (g)`) <= 1e-4)]
 ```
 
-
 ```{r}
 data.BoddyEtAl.2[data.BoddyEtAl.1][
   `Brain Mass (g)` >= Brain.Mass..g.CI95.lower & 
@@ -964,8 +730,8 @@ data.BoddyEtAl.2[data.BoddyEtAl.1][
              No..Individuals, 
              Brain.Mass.SE, 
              Body.Mass.SE, 
-             inferred.Brain.SD, 
-             inferred.Body.SD, 
+             inferred.Brain.SE, 
+             inferred.Body.SE, 
              Source,
              Notes,
              i.Notes,
@@ -991,8 +757,8 @@ data.BoddyEtAl.2[data.BoddyEtAl.1][
              No..Individuals, 
              Brain.Mass.SE, 
              Body.Mass.SE, 
-             inferred.Brain.SD, 
-             inferred.Body.SD,
+             inferred.Brain.SE, 
+             inferred.Body.SE,
              Source, 
              Notes, 
              i.Notes,
@@ -1000,32 +766,255 @@ data.BoddyEtAl.2[data.BoddyEtAl.1][
       ]
 ```
 
-## Entries with 0 SE
-```{r}
-data.BoddyEtAl.2[data.BoddyEtAl.1][Brain.Mass.SE ==0 | Body.Mass.SE == 0][
-  
-        , list(SpeciesName2, 
-             Brain.Mass..g., 
-             Brain.Mass..g.CI95.lower, 
-             Brain.Mass..g.CI95.upper, 
-             `Brain Mass (g)`, 
-             Body.Mass..g., 
-             Body.Mass..g.CI95.lower, 
-             Body.Mass..g.CI95.upper,
-             `Body Mass (g)`,
-             No..Individuals, 
-             Brain.Mass.SE, 
-             Body.Mass.SE, 
-             inferred.Brain.SD, 
-             inferred.Body.SD,
-             Source, 
-             Notes, 
-             i.Notes,
-             Order)
-]
+## Use the linear models to correct SEs for entries in data.BoddyEtAl.2, without match with Brain- and Body-mass values in data.BoddyEtAl.1
+```{r, eval=TRUE}
+data.BoddyEtAl.2 <- data.BoddyEtAl.2[data.BoddyEtAl.1]
+
+data.BoddyEtAl.2[, `Brain Mass SE (g)`:=Brain.Mass.SE]
+data.BoddyEtAl.2[, `Body Mass SE (g)`:=Body.Mass.SE]
+
+data.BoddyEtAl.2[
+  !(abs(Brain.Mass..g. - `Brain Mass (g)`) <= 1e-6 &
+      abs(Body.Mass..g. - `Body Mass (g)`) <= 1e-4),
+  Notes:=paste(Notes, "; Mitov: corrected SEs for entries in data.BoddyEtAl.2, without match with Brain- and Body-mass values in data.BoddyEtAl.1 (using lm.Body.SE.c and lm.Brain.SE.a).")]
+
+data.BoddyEtAl.2[
+  !(abs(Brain.Mass..g. - `Brain Mass (g)`) <= 1e-6 &
+      abs(Body.Mass..g. - `Body Mass (g)`) <= 1e-4),
+  `Body Mass SE (g)`:=predict.Body.Mass.SE(`Body Mass (g)`)]
+
+data.BoddyEtAl.2[
+  !(abs(Brain.Mass..g. - `Brain Mass (g)`) <= 1e-6 &
+      abs(Body.Mass..g. - `Body Mass (g)`) <= 1e-4),
+  `Brain Mass SE (g)`:=predict.Brain.Mass.SE(`Brain Mass (g)`, `Body Mass SE (g)`)]
 ```
 
-```{r, results="hide", eval=FALSE}
+
+```{r}
+data.BoddyEtAl.2[, `Brain Mass CI 95% lower (g)`:=`Brain Mass (g)` - 1.96*`Brain Mass SE (g)`]
+data.BoddyEtAl.2[, `Brain Mass CI 95% upper (g)`:=`Brain Mass (g)` + 1.96*`Brain Mass SE (g)`]
+
+data.BoddyEtAl.2[, `Body Mass CI 95% lower (g)`:=`Body Mass (g)` - 1.96*`Body Mass SE (g)`]
+data.BoddyEtAl.2[, `Body Mass CI 95% upper (g)`:=`Body Mass (g)` + 1.96*`Body Mass SE (g)`]
+```
+
+```{r}
+data.BoddyEtAl.2 <- data.BoddyEtAl.2[
+  , list(SpeciesName2, 
+         `Species Name`, 
+         `Brain Mass (g)`,
+         `Brain Mass SE (g)`, 
+         `Brain Mass CI 95% lower (g)`,
+         `Brain Mass CI 95% upper (g)`,
+         `Body Mass (g)`,
+         `Body Mass SE (g)`, 
+         `Body Mass CI 95% lower (g)`,
+         `Body Mass CI 95% upper (g)`,
+         Order,
+         Source,
+         Notes = paste0(Notes, "; ", i.Notes)
+         )]
+```
+
+### A plot of the final SEs againt Brain-mass and Body-mass
+```{r, fig.width=16, fig.height=8}
+
+pl.Brain.SE <- data.BoddyEtAl.2[
+  , 
+  ggplot() +
+    geom_point(aes(x = `Brain Mass (g)`, 
+                   y = `Brain Mass SE (g)`
+                   ), alpha = 0.8) +
+    scale_x_continuous(limits = c(0, max(`Brain Mass (g)`))) +
+    scale_y_continuous(limits = c(0, max(`Brain Mass (g)`))) +
+    theme_grey()]
+
+pl.Body.SE <- data.BoddyEtAl.2[
+  , 
+  ggplot() +
+    geom_point(aes(x = `Body Mass (g)`, 
+                   y = `Body Mass SE (g)`
+                   ), alpha = 0.8) +
+    scale_x_continuous(limits = c(0, max(`Body Mass (g)`))) +
+    scale_y_continuous(limits = c(0, max(`Body Mass (g)`))) +
+    theme_grey()]
+
+plot_grid(pl.Brain.SE, pl.Body.SE, labels = LETTERS[1:2])
+```
+
+## Log10 transformation of values and standard errors
+
+```{r, fig.width=16, fig.height=8}
+pl1 <- ggplot(data.BoddyEtAl.2) +
+  geom_density(aes(x=`Brain Mass (g)`)) +
+  scale_x_continuous(trans = "log10")
+pl2 <- ggplot(data.BoddyEtAl.2) + 
+  geom_density(aes(x = `Body Mass (g)`)) +
+  scale_x_continuous(trans = "log10")
+plot_grid(pl1, pl2, labels = LETTERS[1:2])
+```
+
+We assume that for a given species, each of the two traits has a sample mean that is log-normally distributed with mean equal to the true mean value for the species and standard deviation, equal to the true standard error for the species. Let's denote by $Y$ any one of the two traits. Assuming that $Y$ is log-normally distributed means that the variable $Z=\ln(Y)$ is normally distributed with mean and variance equal to $\mu_{Z}$ and $\sigma_{Z}^{2}$ for some values of these two parameters. At first glance, this assumption may seem at odds with the central limit theorem, which guarantees that for a large enough $n$ (e.g. $n\geq 30$), the distribution of the sample mean, $\bar{Y}$, is *approximately* normal with mean equal to the population mean, $\mu_{Y}$, and variance equal to the squared standard error, $\sigma_{e,Y}^2$. This, however, does not imply that the sample mean is normally distributed, because a normal distribution has non-zero density over all real numbers, whereas traits like body-mass and brain-mass can only assume non-negative values. Assuming a log-normal distribution solves this issue because its domain is limited to the positive real numbers. Moreover, if the coefficent of variation $CV_{Y}=\frac{\sigma_{e,Y}}{\mu_{Y}}$ is small, the log-normal distribution obtains a bell-shaped density very similar to a normal distribution. 
+
+Let $X=\lg(Y)=\lg(e)\ln(y)$. Following Eqs. 1-5 in [@Quan:2003cq], it is possible to estimate $\mu_{X}$ and $\sigma_{X}^{2}$ from estimates of $\mu_{Y}$, $\sigma_{e,Y}^2$:
+
+\[
+\hat{\sigma_{X}}^2=\big[\lg(e)\big]^2\bigg[\ln(1+\frac{\hat{\sigma_{Y}}^2}{\hat{\mu_{Y}}^2})\bigg]\\
+\hat{\mu_{X}}=\lg(e)\bigg[\ln(\hat{\mu_{Y}})-\frac{1}{2}\hat{\sigma_{Z}}^2\bigg]
+\]
+
+```{r}
+SDLog.lnorm <- function(hatMean, hatMeanSE, base=exp(1)) {
+  f <- log(exp(1), base = base)
+  sqrt(f^2* log(1 + hatMeanSE^2 / hatMean^2))
+}
+
+MeanLog.lnorm <- function(hatMean, hatMeanSE, base=exp(1)) {
+  f <- log(exp(1), base = base)
+  varLog <- SDLog.lnorm(hatMean, hatMeanSE)^2
+  f*(log(hatMean)-0.5*varLog)
+}
+```
+
+```{r}
+data.BoddyEtAl.2[
+  , `lg Brain Mass SE`:=SDLog.lnorm(`Brain Mass (g)`, `Brain Mass SE (g)`, base = 10)]
+
+data.BoddyEtAl.2[
+  , `lg Body Mass SE`:=SDLog.lnorm(`Body Mass (g)`, `Body Mass SE (g)`, base = 10)]
+
+```
+
+```{r, fig.width=16, fig.height=8}
+pl1 <- ggplot(data.BoddyEtAl.2) +
+  geom_point(aes(x=log10(`Brain Mass (g)`), y=`lg Brain Mass SE`)) +
+  geom_abline(intercept = 0, slope = 0, color="grey") 
+
+pl2 <- ggplot(data.BoddyEtAl.2) + 
+  geom_point(aes(x = log10(`Body Mass (g)`), y = `lg Body Mass SE`)) +
+  geom_abline(intercept = 0, slope = 0, color="grey")
+plot_grid(pl1, pl2, labels = LETTERS[1:2])
+```
+
+```{r}
+# random generators of exp of random variables
+rlnorm <- function(n, meanlog=0, sdlog = 1, base = exp(1)) {
+  base^rnorm(n, meanlog, sdlog)
+}
+
+rlunif <- function(n, meanlog=0, sdlog = 1, base = exp(1)) {
+  varlog <- sdlog^2
+  widthlog <- sdlog*sqrt(12)
+  alog <- meanlog - widthlog/2
+  blog <- meanlog + widthlog/2
+  base^runif(n, alog, blog)
+}
+```
+
+```{r}
+N.Species <- 10
+N.Samples <- 1000
+N.Obs <- 100
+
+globalSD <- 0.1
+globalMean <- 1
+
+baseLog = exp(1)
+
+seed <- data.table(
+  i.spec = 1:N.Species, 
+  meanLog = rlnorm(N.Species, globalMean, globalSD),
+  sdLog = sample(seq(0.01, 0.06, by=0.01), size = N.Species, replace = TRUE))
+seed[, seLog:=sdLog/sqrt(N.Obs)]
+
+seed[, MeanY := exp(log(baseLog)*meanLog + log(baseLog)^2*sdLog^2/2)]
+seed[, VarY := exp(2*log(baseLog)*meanLog + 4*log(baseLog)^2*sdLog^2/2)-MeanY^2] 
+
+data <- rbindlist(lapply(1:N.Samples, function(ii) {
+  samp <- copy(seed)[, i.samp:=ii]
+  rbindlist(lapply(1:N.Obs, function(jj) {
+    copy(samp[, i.obs:=jj])
+  }))
+}))
+
+setkey(data, i.spec, i.samp, i.obs)
+
+data[, Y:=sapply(1:.N, function(j) rlnorm(1, meanLog[j], sdLog[j], base = baseLog))]
+#data[, Y:=sapply(1:.N, function(j) rlunif(1, meanLog[j], sdLog[j], base = baseLog))]
+```
+
+
+```{r}
+ana.1 <- data[, list(
+  meanLog = unique(meanLog), 
+  sdLog = unique(sdLog), 
+  seLog = unique(seLog), 
+  MeanY = unique(MeanY),
+  VarY = unique(VarY),
+  
+  # This should be approximately equal to seLog.
+  # This is the true standard error of the LogMean. 
+  SDLogMeanY = SDLog.lnorm(unique(MeanY), sqrt(unique(VarY)/.N), base = baseLog),
+  
+  # This should be approximately equal to meanLog. How close depends on 
+  # how appropriate the assumption of log-normality for
+  # the distribution of the sample mean is.
+  MeanLogMeanY = MeanLog.lnorm(unique(MeanY), sqrt(unique(VarY)/.N), base = baseLog),
+  
+  hatMeanY = mean(Y),
+  hatVarY = var(Y),
+  
+  hatSDHatMeanY = sqrt(var(Y)/.N),
+  
+  logHatMeanY = log(mean(Y), base = baseLog),
+  
+  hatSDLogHatMeanY = SDLog.lnorm(mean(Y), sqrt(var(Y)/.N), base = baseLog),
+  hatMeanLogHatMeanY = MeanLog.lnorm(mean(Y), sqrt(var(Y)/.N), base = baseLog),
+  meanLogMeanY = MeanLog.lnorm(unique(MeanY), sqrt(unique(VarY)/.N), base = baseLog)),
+  
+  by = list(i.spec, i.samp)]
+```
+
+```{r}
+ana.2 <- ana.1[, list(
+  meanLog = unique(meanLog), 
+  sdLog = unique(sdLog), 
+  seLog = unique(seLog), 
+  MeanY = unique(MeanY),
+  VarY = unique(VarY),
+  
+  # This should be approximately equal to seLog.
+  # This is the true standard error. 
+  SDLogMeanY = unique(SDLogMeanY),
+  
+  # This should be approximately equal to meanLog. How close depends on 
+  # how appropriate the assumption of log-normality for
+  # the distribution of the sample mean is.
+  MeanLogMeanY = unique(MeanLogMeanY),
+  
+  hatMeanHatMeanY = mean(hatMeanY),
+  hatMeanHatVarY = mean(hatVarY),
+  
+  hatMeanHatSDHatMeanY = mean(hatSDHatMeanY),
+  
+  hatMeanLogHatMeanY = mean(logHatMeanY),
+  
+  hatMeanHatSDLogHatMeanY = mean(hatSDLogHatMeanY),
+  hatMeanHatMeanLogHatMeanY = mean(hatMeanLogHatMeanY),
+  hatMeanMeanLogMeanY = mean(meanLogMeanY)), 
+  
+  by = i.spec]
+
+ana.2[, list(
+  hatMeanLogHatMeanY - meanLog,
+  hatMeanHatMeanLogHatMeanY - meanLog,
+  hatMeanMeanLogMeanY - meanLog
+  )]
+```
+
+# Phylogenetic tree from [@BinindaEmonds:2007bk]
+
+```{r, results="hide", eval=TRUE}
 # download the mammal trees from Bininda-Emmonds 2007. The user running that
 # code should have access to the following web-address:
 trees <- read.nexus(
@@ -1034,8 +1023,16 @@ trees <- read.nexus(
 # the mmammalST_bestDates tree containing 4510 tips and 2108 internal nodes
 tree.big <- trees[[1]]
 
-# prune all tips that are not found in data.BoddyEtAl
-tree <- drop.tip(tree.big, tip = setdiff(tree.big$tip.label, data.BoddyEtAl[, SpeciesName2]))
+# Missing tip in original dataset provided by Prof. Stelling
+missingTip <- "Microtus_pennsylvanicus"
+
+# prune all tips that are not found in data.BoddyEtAl.2
+tree <- drop.tip(tree.big, 
+                 tip = union(missingTip, 
+                             setdiff(tree.big$tip.label, 
+                                     data.BoddyEtAl.2[, SpeciesName2])))
+
+
 
 # test that no terminal branches are of length zero : returns FALSE
 # any(tree$edge[tree$edge.length==0, 2]<=629)
@@ -1052,41 +1049,68 @@ while(TRUE) {
 }
 
 usethis::use_data(tree, overwrite = TRUE)
+```
 
-data.BoddyEtAl[, SpeciesName2:=sapply(`Species Name`, function(sn) gsub(" ", "_", sn))]
-data.BoddyEtAl <- data.BoddyEtAl[SpeciesName2%in%tree$tip.label]
-data.BoddyEtAl[, lg_BodyMass:=log10(`Body Mass (g)`)]
-data.BoddyEtAl[, lg_BrainMass:=log10(`Brain Mass (g)`)]
-setkey(data.BoddyEtAl, SpeciesName2)
-data.BoddyEtAl[list(tree$tip.label), node:=1:.N]
-usethis::use_data(data.BoddyEtAl, overwrite = TRUE)
+# Create final data matrices
+```{r, eval=TRUE}
+library(MGPMMammals)
+data.BoddyEtAl.2 <- data.BoddyEtAl.2[SpeciesName2 %in% tree$tip.label]
 
-values <- data.BoddyEtAl[list(tree$tip.label), rbind(lg_BodyMass=lg_BodyMass, lg_BrainMass=lg_BrainMass)]
+data.BoddyEtAl.2[list(tree$tip.label), node:=1:.N]
+usethis::use_data(data.BoddyEtAl.2, overwrite = TRUE)
+
+values <- data.BoddyEtAl.2[list(tree$tip.label), 
+                           rbind(lg_BodyMass=log10(`Body Mass (g)`), 
+                                 lg_BrainMass=log10(`Brain Mass (g)`))]
+colnames(values) <- tree$tip.label
 usethis::use_data(values, overwrite = TRUE)
+
+
+SEs <- data.BoddyEtAl.2[list(tree$tip.label),
+                        rbind(lg_BodyMass_SE = `lg Body Mass SE`, 
+                              lg_BrainMass_SE = `lg Brain Mass SE`)]
+colnames(SEs) <- tree$tip.label
+usethis::use_data(SEs, overwrite = TRUE)
 ```
 
 ```{r, eval=FALSE}
+
 load("Result_FineTuning_BestFit_MammalData_t6.RData")
 
-library(PCMBase)
+attr(finalModel, "SE") <- matrix(0.0, 2, 629)
+logLik(finalModel)
 
 names(attributes(finalModel))
+
+tips <- dtMammals[list(as.integer(attr(finalModel, "tree")$tip.label)), SpeciesName2]
+
+X2 <- values[, tips]
+attr(finalModel, "X") <- X2
+
+logLik(finalModel)
+
 treeFinalModel <- attr(finalModel, "tree")
 
-PCMTreeGetStartingNodesRegimes(treeFinalModel)
-
-tree2 <- PCMTreeSetRegimes(tree, PCMTreeGetStartingNodesRegimes(treeFinalModel), inplace = FALSE)
+tree2 <- PCMTreeSetRegimes(
+  tree,
+  PCMTreeGetStartingNodesRegimes(treeFinalModel),
+  inplace = FALSE)
 
 PCMTreeGetStartingNodesRegimes(treeFinalModel)
 PCMTreeGetStartingNodesRegimes(tree2)
 
-attr(finalModel, "X") <- values
-attr(finalModel, "SE") <- values * 0.0
-attr(finalModel, "tree") <- tree2
+attr(finalModel, "X") <- values[, tree2$tip.label]
+attr(finalModel, "tree") <- tree2 # treeFinalModel
+attr(finalModel, "SE") <- SEs[, tree2$tip.label]*0
+
+metaI <- PCMInfo(attr(finalModel, "X"), attr(finalModel, "tree"), finalModel, SEs[, tree2$tip.label])
+
+PCMLik(attr(finalModel, "X"), attr(finalModel, "tree"), finalModel, SEs[, tree2$tip.label])
 
 logLik(finalModel)
-PCMLik(values, tree2, finalModel)
 
+#PCMLik(valuesMammals, tree2, finalModel)
+#PCMLik(values[, tree2$tip.label], tree2, finalModel)
 ```
 
 # References
