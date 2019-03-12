@@ -885,7 +885,7 @@ data.BoddyEtAl.2[
 
 ```
 
-```{r, fig.width=16, fig.height=8}
+```{r, fig.width=8, fig.height=4}
 pl1 <- ggplot(data.BoddyEtAl.2) +
   geom_point(aes(x=log10(`Brain Mass (g)`), y=`lg Brain Mass SE`)) +
   geom_abline(intercept = 0, slope = 0, color="grey") 
@@ -1038,6 +1038,11 @@ tree <- drop.tip(tree.big,
 # any(tree$edge[tree$edge.length==0, 2]<=629)
 # delete branches of length 0
 tree <- ladderize(di2multi(tree))
+
+PCMTreeSetLabels(
+  tree, 
+  labels = c(tree$tip.label, (PCMTreeNumTips(tree) + 1L):PCMTreeNumNodes(tree)))
+
 # segment long branches
 while(TRUE) {
   points <- PCMTreeLocateMidpointsOnBranches(tree, 16)
@@ -1071,46 +1076,6 @@ SEs <- data.BoddyEtAl.2[list(tree$tip.label),
                               lg_BrainMass_SE = `lg Brain Mass SE`)]
 colnames(SEs) <- tree$tip.label
 usethis::use_data(SEs, overwrite = TRUE)
-```
-
-```{r, eval=FALSE}
-
-load("Result_FineTuning_BestFit_MammalData_t6.RData")
-
-attr(finalModel, "SE") <- matrix(0.0, 2, 629)
-logLik(finalModel)
-
-names(attributes(finalModel))
-
-tips <- dtMammals[list(as.integer(attr(finalModel, "tree")$tip.label)), SpeciesName2]
-
-X2 <- values[, tips]
-attr(finalModel, "X") <- X2
-
-logLik(finalModel)
-
-treeFinalModel <- attr(finalModel, "tree")
-
-tree2 <- PCMTreeSetRegimes(
-  tree,
-  PCMTreeGetStartingNodesRegimes(treeFinalModel),
-  inplace = FALSE)
-
-PCMTreeGetStartingNodesRegimes(treeFinalModel)
-PCMTreeGetStartingNodesRegimes(tree2)
-
-attr(finalModel, "X") <- values[, tree2$tip.label]
-attr(finalModel, "tree") <- tree2 # treeFinalModel
-attr(finalModel, "SE") <- SEs[, tree2$tip.label]*0
-
-metaI <- PCMInfo(attr(finalModel, "X"), attr(finalModel, "tree"), finalModel, SEs[, tree2$tip.label])
-
-PCMLik(attr(finalModel, "X"), attr(finalModel, "tree"), finalModel, SEs[, tree2$tip.label])
-
-logLik(finalModel)
-
-#PCMLik(valuesMammals, tree2, finalModel)
-#PCMLik(values[, tree2$tip.label], tree2, finalModel)
 ```
 
 # References

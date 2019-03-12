@@ -1,6 +1,6 @@
 # This script can be run locally or on a cluster using a command like:
 #
-# bsub -M 400000 -n 400 -W 23:59 -R ib sh R --vanilla --slave -f ../../DetectShifts_MGPM_A_F_best_clade_2.R
+# bsub -M 50000 -n 50 -W 23:59 -R ib sh R --vanilla --slave -f ../../DetectShifts_bootstrap_MGPM_A_F_best_clade_RR.R
 #
 library(ape)
 library(PCMBase)
@@ -17,7 +17,7 @@ if(length(args) > 0) {
   id <- 1
 }
 
-prefixFiles = paste0("MGPM_A_F_best_clade_2_2_")
+prefixFiles = paste0("bootstrap_MGPM_A_F_best_clade_RR_id_", id)
 
 if(!exists("cluster") || is.null(cluster)) {
   if(require(doMPI)) {
@@ -77,37 +77,53 @@ print(PCMOptions())
 
 
 fitMappings <- PCMFitMixed(
+  X = MGPMMammals::valuesBootstrapBestFitToDataWithSEs$X[[id]][
+    , seq_len(PCMTreeNumTips(MGPMMammals::tree))],
 
-  X = MGPMMammals::values, tree = MGPMMammals::tree, SE = MGPMMammals::SEs,
+  tree = MGPMMammals::tree,
+  SE = MGPMMammals::SEs,
 
-  metaIFun = PCMInfoCpp, positiveValueGuard = 5000,
+  metaIFun = PCMInfoCpp, positiveValueGuard = 10000,
 
   tableFits = tableFits,
 
   listPartitions = NULL,
 
-  minCladeSizes = 20L,
+  minCladeSizes = 20,
 
   maxCladePartitionLevel = 100L, maxNumNodesPerCladePartition = 1L,
 
-  listAllowedModelTypesIndices = "best-clade-2",
+  listAllowedModelTypesIndices = "best-clade",
 
   argsConfigOptim1 = DefaultArgsConfigOptim(
-    numCallsOptim = 400L,
-    numRunifInitVecParams = 100000L,
-    numGuessInitVecParams = 50000L),
+    numCallsOptim = 200,
+    numRunifInitVecParams = 100000,
+    numGuessInitVecParams = 50000),
   argsConfigOptim2 = DefaultArgsConfigOptim(
-    numCallsOptim = 20L,
-    numRunifInitVecParams = 1000L,
-    numGuessInitVecParams = 1000L,
-    numJitterRootRegimeFit = 1000L, sdJitterRootRegimeFit = 0.05,
-    numJitterAllRegimeFits = 1000L, sdJitterAllRegimeFits = 0.05),
+    numCallsOptim = 4,
+    numRunifInitVecParams = 1000,
+    numGuessInitVecParams = 10000,
+    numJitterRootRegimeFit = 1000,
+    sdJitterRootRegimeFit = 0.05,
+    numJitterAllRegimeFits = 1000,
+    sdJitterAllRegimeFits = 0.05),
+  argsConfigOptim3 = DefaultArgsConfigOptim(
+    numCallsOptim = 4,
+    numRunifInitVecParams = 1000,
+    numGuessInitVecParams = 10000,
+    numJitterRootRegimeFit = 1000,
+    sdJitterRootRegimeFit = 0.05,
+    numJitterAllRegimeFits = 1000,
+    sdJitterAllRegimeFits = 0.05),
+
+  maxNumRoundRobins = 5,
+  maxNumPartitionsInRoundRobins = 8,
 
   doParallel = TRUE,
 
   prefixFiles = prefixFiles,
   saveTempWorkerResults = TRUE,
-  printFitVectorsToConsole = TRUE,
+  printFitVectorsToConsole = FALSE,
   verbose = TRUE,
   debug = FALSE)
 

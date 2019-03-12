@@ -131,6 +131,18 @@ fitMappings <- PCMFitModelMappings(
 
 save(fitMappings, file = paste0("FinalResult_", prefixFiles, ".RData"))
 
+
+# the final fitMappings object from the 6th try (t6) had the best AIC score of
+# all tries and was saved as data-object for the package using code equivalent to
+# this one:
+#
+# bestFitMappingsToDataWithoutSEs <- fitMappings
+# usethis::use_data(bestFitMappingsToDataWithoutSEs)
+#
+# This fitMappings object has later been used as input in TuneBestFitMammalData_t6.R
+# which performed the round robin (step 3).
+
+
 if(exists("cluster") && !is.null(cluster)) {
   parallel::stopCluster(cluster)
   # Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.

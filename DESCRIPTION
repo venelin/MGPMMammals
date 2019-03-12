@@ -5,7 +5,7 @@ Version: 0.1.0
 Authors@R: c(person("Venelin", "Mitov", email = "vmitov@gmail.com",
                  role = c("aut", "cre", "cph")))
 Maintainer: Venelin Mitov <vmitov@gmail.com>
-Description: Wraps the code and fitted models of the mammal data analysis for 
+Description: Contains the code and fitted models of the mammal data analysis for 
   the research article entitled "Automatic Generation of Evolutionary Hypotheses 
   using Mixed Gaussian Phylogenetic Models".
 Encoding: UTF-8
@@ -16,10 +16,11 @@ Depends:
 Imports:
     PCMBase,
     data.table,
-    readxl,
     ape
 Suggests:
+    readxl,
     testthat,
+    usethis,
     knitr,
     rmarkdown,
     covr

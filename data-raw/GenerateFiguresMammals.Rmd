@@ -1,0 +1,1855 @@
+---
+title: "GeneratedFigures"
+author: "Venelin Mitov"
+date: "6 June 2018"
+output: pdf_document
+keep_md: true
+---
+
+```{r setup, include=FALSE}
+library(PCMBase)
+library(PCMFit)
+library(MGPMMammals)
+library(ggtree)
+library(ggplot2)
+library(ggimage)
+library(cowplot)
+library(data.table)
+library(fpc)
+library(knitr)
+library(rmarkdown)
+library(lmtest)
+library(xtable)
+library(mvtnorm)
+
+opts_chunk$set(dev='pdf', 
+               #results="hide",
+               warning=FALSE,
+               dev.args=list(
+                 family="ArialMT", 
+                 pointsize=10,
+                 colormodel='rgb'
+               ),
+               dpi=600, bg='white')
+
+options(PCMBase.Value.NA = -1e20)
+options(PCMBase.Lmr.mode = 11)
+
+options(PCMBase.Threshold.SV = 1e-6)
+options(PCMBase.Threshold.EV = 1e-5)
+options(PCMBase.Skip.Singular = FALSE)
+options(PCMBase.Threshold.Skip.Singular = 1e-4)
+
+evalFig1 <- TRUE
+scaleFigModParams <- 1.0
+evalFig2 <- FALSE
+evalFig2.1 <- FALSE
+evalFig3 <- FALSE
+evalFig9 <- FALSE
+```
+
+
+```{r load-Results-MammalData, include=FALSE, eval=FALSE}
+# this will load an object called fitMappings:
+# t6 corresponds to the best fit with models A-F. 
+# load("Results/FinalResult_MixedGaussian_MammalData_id_1_t6_.RData")
+# The fitMappings from the above file was saved as a data-object in the MGPMMammals
+# package:
+fitMappings <- MGPMMammals::bestFitMappingsToDataWithoutSEs
+
+# Set internal node.label containing family and order names at the internal
+# nodes
+tree$node.label <- fitMappings$treeOriginal$node.label
+
+# The "Result_FineTuning_BestFit_MammalData_t1.RData file contains the refined 
+# fit from t6 (improving the AIC from -237 to -241, by iteratively fixing all 
+# but one regimes, while optimizing the left free regime with respect to model 
+# type and parameters). This step was performed in a separate R-script 
+# TuneBestFitMammalData_t6.R.
+# load("Results/Result_FineTuning_BestFit_MammalData_t6.RData")
+# the finalModel object from the above file was saved as data-object in the 
+# MGPMMammals package:
+# finalModel <- MGPMMammals::bestModelToDataWithoutSEs
+
+# The "FitFinalModel_t6_toDataWithSEs_t3.RData" file contains the fit of the 
+# final model from Result_FineTuning_BestFit_MammalData_t1.RData to the mammal
+# data with non-zero SEs. This fit resulted in the best AIC compared to fits
+# from the recursive clade partition algorithm on the same data (including SEs),
+# so we retained this fit as the best fit found. 
+# load("Results/FitFinalModel_t6_toDataWithSEs_t3.RData")
+# finalModel <- fitFinalModel_t6_toDataWithSEs$modelOptim
+# the fitFinalModel_t6_toDataWithSEs object was saved as a data-object in the
+# MGPMMammals package:
+inferredModel <- MGPMMammals::bestFitToDataWithSEs$modelOptim
+#inferred <- RetrieveBestFitAIC(fitMappings, rank = 2)
+#inferredModel <- inferred$inferredModel
+
+inferredTree <- attr(inferredModel, "tree")
+
+PCMTreeSetLabels(inferredTree, PCMTreeGetLabels(tree))
+colnames(values) <- inferredTree$tip.label
+
+# insert singleton nodes in inferred tree at specific epochs in the past. 
+epochs <- seq(5, max(PCMTreeNodeTimes(inferredTree)), by = 26.66)
+for(epoch in epochs) {
+  inferredTree <- 
+    PCMTreeInsertSingletonsAtEpoch(inferredTree, epoch, minLength = 2)
+}
+
+treeBackbone <- PCMTreeBackbonePartition(inferredTree)
+
+bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochs <- inferredTree
+bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochs <- treeBackbone
+bestFitToDataWithSEs$epochs <- epochs
+
+inferredTreeHD <- attr(inferredModel, "tree")
+PCMTreeSetLabels(inferredTreeHD, PCMTreeGetLabels(tree))
+epochsHD <- seq(0.2, max(PCMTreeNodeTimes(inferredTree)), by = 2)
+for(epoch in epochsHD) {
+  inferredTreeHD <- 
+    PCMTreeInsertSingletonsAtEpoch(inferredTreeHD, epoch, minLength = 0.2)
+}
+treeBackboneHD <- PCMTreeBackbonePartition(inferredTreeHD)
+bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochsHD <- inferredTreeHD
+bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochsHD <- treeBackboneHD
+bestFitToDataWithSEs$epochsHD <- epochsHD
+
+# 
+usethis::use_data(bestFitToDataWithSEs, overwrite = TRUE)
+```
+
+```{r, include=FALSE, eval=TRUE}
+fitMappings <- MGPMMammals::bestFitMappingsToDataWithoutSEs
+inferredModel <- bestFitToDataWithSEs$modelOptim
+inferredTree <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochs
+treeBackbone <- bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochs
+epochs <- bestFitToDataWithSEs$epochs
+```
+
+```{r linreg-brain-body-global-uncorrected, include=TRUE}
+cfLSRUncorrected <- coef(lm(values[2,]~values[1,]))
+slopeGlobal <- cfLSRUncorrected[2]
+interceptGlobal <- cfLSRUncorrected[1]
+muGlobal <- rowMeans(values)
+```
+
+```{r brain-body-mass-SE, fig.width=8, fig.height=4}
+plBodySE <- 
+  ggplot(data.table(x = MGPMMammals::values[1,], y=MGPMMammals::SEs[1,])) +
+  geom_point(aes(x = x, y = y)) +
+  xlab("body mass [lg grams]") +
+  ylab("body mass SE [lg grams]") +
+  theme_grey()
+
+plBrainSE <- 
+  ggplot(data.table(x = MGPMMammals::values[2,], y=MGPMMammals::SEs[2,])) +
+  geom_point(aes(x = x, y = y)) +
+  xlab("brain mass [lg grams]") +
+  ylab("brain mass SE [lg grams]") +
+  theme_grey()
+
+cowplot::plot_grid(plBodySE, plBrainSE, labels = LETTERS[1:2])
+```
+
+```{r fig1-MammalBackBone-SetParam, echo=FALSE, include=FALSE, eval=TRUE}
+modelTypes <- MGPMDefaultModelTypes()
+shortModelNames <- sapply(seq_along(modelTypes), function(i) {
+  substr(modelTypes[i], 1, 2)
+})
+
+shortModelNames <- paste0(shortModelNames, "[", LETTERS[1:length(modelTypes)], "]")
+names(shortModelNames) <- modelTypes
+
+R <- PCMNumRegimes(inferredModel)
+palette <- PCMColorPalette(
+  PCMTreeNumParts(treeBackbone), as.character(PCMRegimes(treeBackbone)))
+
+k <- 2
+xlim <- range(values[1, ]) + c(-1.5, -0)
+ylim <- range(values[2, ]) + c(-1.5, 1)
+hjust <- -10
+vjust <- -0.3
+width <- 18 # 16.5
+height = 21.75 #19.8
+offsetAxis <- 0.5
+numGridPoints <- 100
+numSamplePoints <- 1000
+roundDigits <- 3
+```
+
+```{r fig1-MammalBackBone-calculate-means-variances-at-epochs, include=FALSE, eval=(evalFig1)}
+mI <- PCMInfo(
+  X = NULL, tree = treeBackbone, model = inferredModel#, 
+  #SE = MGPMMammals::SEs[, treeBackbone$tip.label]
+  )
+inferredMeans <- PCMMean(
+  treeBackbone, PCMApplyTransformation(inferredModel), metaI = mI, 
+  internal = TRUE)
+inferredVars <- PCMVar(
+  treeBackbone, PCMApplyTransformation(inferredModel), metaI = mI, 
+  internal = TRUE)$Wii
+```
+
+```{r fig1-MammalBackBone-InsetsScatterPlots, include=FALSE, eval=(evalFig1)}
+dtTipRegimes <- PCMTreeDtNodes(inferredTree)[endNode <= PCMTreeNumTips(inferredTree)]
+dtTipRegimes[, lg_body:=values[1, endNodeLab]]
+dtTipRegimes[, lg_brain:=values[2, endNodeLab]]
+setkey(dtTipRegimes, endNodeLab)
+partRegime <- PCMTreeGetPartRegimes(inferredTree)
+
+scatterPlotsTips <- lapply(treeBackbone$tip.label, function(tip) {
+  tipRegime <- dtTipRegimes[list(tip), partRegime[part]]
+  
+  tipPart <- dtTipRegimes[list(tip), part]
+  
+  mu <- dtTipRegimes[part == tipPart, colMeans(cbind(lg_body, lg_brain))]
+  Sigma <- dtTipRegimes[part == tipPart, cov(cbind(lg_body, lg_brain))]
+  slope <- Sigma[1,2]/Sigma[1,1]
+  intercept <- mu[2] - slope*mu[1]
+  labelSlope <- paste0(".", as.character(round(slope*100)))
+  ggplot(dtTipRegimes[part == tipPart]) +
+    coord_fixed(xlim = xlim, ylim = ylim, ratio = 1) +
+    
+    geom_vline(xintercept = muGlobal[1], color = "darkgrey", size = 1, linetype = 5) +
+    geom_hline(yintercept = muGlobal[2], color = "darkgrey", size = 1, linetype = 5) +
+    geom_abline(slope = slopeGlobal, intercept = interceptGlobal, color = "darkgrey", size = 3, linetype = 5) +
+    
+    geom_vline(xintercept = mu[1], color = palette[as.character(tipRegime)], size = 3, alpha = 0.8) +
+    geom_hline(yintercept = mu[2], color = palette[as.character(tipRegime)], size = 3, alpha = 0.8) +
+    geom_abline(slope = slope, intercept = intercept, color = palette[as.character(tipRegime)], size = 3, alpha = 0.8) +
+    geom_point(aes(x = lg_body, y = lg_brain), size = 1.8, color = palette[as.character(tipRegime)], alpha = 0.8) +
+    geom_text(x=5.2, y = slope * 5.2 + intercept + 1.2, 
+              label = labelSlope, size = 14,
+              angle = atan(slope)*180/pi, 
+              color = "black") +
+              #color = palette[as.character(tipRegime)]) +
+    
+    scale_x_continuous(breaks = c(0, 2, 4, 6)) +
+    scale_y_continuous(breaks = c(-2, 0, 2, 4)) +
+    xlab(NULL) + ylab(NULL) +
+    theme_bw() +
+    theme(legend.position = "none", axis.line = element_line(size=1), axis.text = element_text(size = 28)) 
+})
+
+names(scatterPlotsTips) <- 1:PCMTreeNumTips(treeBackbone)
+```
+
+```{r fig1-MammalBackBone-InsetsGaussianEllipses, include=FALSE, eval=evalFig1}
+ellipsePlots <- lapply(epochs, function(epoch) {
+  nodes <- PCMTreeNearestNodesToEpoch(treeBackbone, epoch)
+  names(nodes) <- as.character(nodes)
+
+  insets <- lapply(names(nodes), function(n) {
+    i <- nodes[n]
+    regimei <- PCMTreeGetPartRegimes(treeBackbone)[PCMTreeGetPartsForNodes(treeBackbone, i)]
+    mu <- inferredMeans[, i]
+    Sigma <- inferredVars[, (i-1)*k + (1:k)]
+    slope <- Sigma[1,2]/Sigma[1,1]
+    intercept <- mu[2] - slope*mu[1]
+    labelSlope <- paste0(".",as.character(round(slope*100)))
+    PCMPlotGaussianSample2D(mu, Sigma, numPoints = numSamplePoints) +
+      
+      geom_vline(xintercept = muGlobal[1], color = "darkgrey", size = 1, linetype = 5) +
+      geom_hline(yintercept = muGlobal[2], color = "darkgrey", size = 1, linetype = 5) +
+      geom_abline(slope = slopeGlobal, intercept = interceptGlobal, color = "darkgrey", size = 3, linetype = 5) +
+      
+      
+      geom_vline(xintercept = mu[1], color = palette[as.character(regimei)], size = 3, alpha = 0.8) +
+      geom_hline(yintercept = mu[2], color = palette[as.character(regimei)], size = 3, alpha = 0.8) +
+      geom_abline(slope = slope, intercept = intercept, color = palette[as.character(regimei)], size = 3, alpha = 0.8) +
+      
+      stat_ellipse(color = palette[as.character(regimei)], type = "norm", level = .99, size = 1.6, alpha = 0.8) +
+      #stat_ellipse(color = palette[as.character(regimei)], type = "norm", level = .5, size = 0.8, alpha = 0.8) +
+      coord_fixed(xlim = xlim, ylim = ylim, ratio = 1) +
+      
+      geom_text(x = 5.2, y = slope * 5.2 + intercept + 1.2, 
+                label = labelSlope, size = 14,
+                angle = atan(slope)*180/pi, 
+                color = "black" ) +
+                #color = palette[as.character(regimei)]) +
+      
+      scale_x_continuous(breaks = c(0, 2, 4, 6)) +
+      scale_y_continuous(breaks = c(-2, 0, 2, 4)) +
+      xlab(NULL) + ylab(NULL) +
+      theme_bw() +
+      theme(legend.position = "none",
+            axis.line = element_line(size=1), axis.text = element_text(size = 28)) #+
+  })
+  names(insets) <- names(nodes)
+  insets
+})
+
+names(ellipsePlots) <- as.character(epochs)
+```
+
+
+```{r fig1-MammalBackBone-InsetsModelParams, include=FALSE, eval=(evalFig1)}
+
+startingNodesRegimesBackbone <- PCMTreeGetPartition(treeBackbone)
+
+modelParamPlots <- lapply(seq_along(startingNodesRegimesBackbone), function(i) {
+  nodei <- startingNodesRegimesBackbone[i]
+  regimei <- PCMTreeGetPartRegimes(treeBackbone)[names(startingNodesRegimesBackbone)[i]]
+  shortModelName <- shortModelNames[class(inferredModel[[regimei]])[1]]
+  labelText <- paste0('paste("', regimei, ': ", ' ,shortModelName, ', " ", ',  
+                      PCMPlotMath(PCMApplyTransformation(inferredModel[[regimei]]), roundDigits),
+                      ')')
+  p <- ggplot() +
+    geom_label(
+      aes(x = 0, y = 0, label=labelText), 
+      size=12, 
+      fill = "white", 
+      color = palette[regimei], 
+      label.size = NA, parse = TRUE) +
+    coord_fixed(ratio = 1, xlim = c(-1.2, 1.2), ylim = c(-1, 1)) +
+    theme_nothing() 
+  p
+})
+
+names(modelParamPlots) <- startingNodesRegimesBackbone
+
+X0Plot <- list(
+  ggplot() + 
+    geom_label(
+      aes(x = 0, y = 0, 
+          label=paste0('paste(X[0]==', PCMPlotMath(inferredModel[["X0"]], roundDigits = 3),')')), 
+      size=12, 
+      fill = "white", 
+      color = palette[1], 
+      label.size = NA, parse = TRUE) +
+      coord_fixed(ratio = 1, xlim = c(-1.2, 1.2), ylim = c(-1, 1)) +
+      theme_nothing() )
+names(X0Plot) <- startingNodesRegimesBackbone[1]
+```
+
+# fig1-MammalBackBone, fig.width=48, fig.height=58, eval=evalFig1}
+
+```{r fig1-MammalBackBone, dev.args=list(colormodel="rgb"), dpi=600, fig.width=44*scaleFigModParams, fig.height=54*scaleFigModParams, eval=evalFig1}
+
+pl <- PCMTreePlot(treeBackbone, size= 10*scaleFigModParams, palette = palette) #+ geom_nodelab(size = 2, angle = 90)
+
+# insets scatter-plots of the tips belonging to each part
+pl <- inset(pl, scatterPlotsTips, width=width*1.25, height = height*1.25, hjust = hjust - 1.4*width, vjust = 1.5*vjust)
+
+# insets ellipse-plots at epochs
+for(insets in ellipsePlots) {
+  if(length(insets) > 0)
+    pl <- inset(pl, insets, width=width*1.25, height = height*1.25, hjust = hjust, vjust = 1.5*vjust)
+}
+
+
+hjustModelParamPlots <- hjust + 2 + c(-18, rep(-30, length(modelParamPlots) - 1))
+vjustModelParamPlots <- rep(1 * vjust, length(modelParamPlots))
+vjustModelParamPlots[3] <- 2.6*vjust
+# pl <- inset(pl, modelParamPlots, width=5*width, height = height/1.6,
+#             hjust = hjustModelParamPlots, vjust = vjustModelParamPlots,
+#             x = "branch")
+pl <- inset(pl, X0Plot[1], width = width, height = height/2,
+            hjust = hjust + 14,
+            vjust = -1*vjust, x = "branch")
+
+dtNodeRegimesBackbone <- PCMTreeDtNodes(treeBackbone)
+
+startingNodeRegimesReal <-
+  dtNodeRegimesBackbone[
+    !sapply(endNodeLab, startsWith, "i_"), 
+    list(node = endNode[which.min(endTime)], lab = endNodeLab[which.min(endTime)]), by = part]
+
+
+# Offsets are specific to the fit, so they have to be adjusted for other fits
+offsets <- startingNodeRegimesReal[, as.integer(part)]
+names(offsets) <- startingNodeRegimesReal[, lab]
+
+offsets[c("Cetartiodactyla", "Microchiroptera")] <- 2
+offsets[c("Haplorrhini", "MuridaeG1", "SciuridaeG1", "Soricidae")] <- 3
+offsets[c("MarmotiniG1", "Cercopithecidae", "HystricognathiG1", "CricetidaeG1")] <- 4
+
+ 
+for(i in seq_len(nrow(startingNodeRegimesReal))) {
+  regimei <- startingNodeRegimesReal[i, part]
+  regimeLab <- startingNodeRegimesReal[i, lab]
+  nodei <- startingNodeRegimesReal[i, node]
+  labi <- startingNodeRegimesReal[i, lab]
+  # use Mammalia instead of Theria for the root
+  if(as.character(regimei) == "1") {
+    labi <- PCMTreeGetLabels(tree)[PCMTreeNumTips(tree) + 1]
+  }
+  pl <- pl + geom_cladelabel(nodei, labi,
+                             color = palette[as.character(regimei)],
+                             offset=42 + 6.8*offsets[regimeLab], 
+                             barsize=5*scaleFigModParams, angle=90,
+                             extend = .3,
+                             offset.text=1.2, hjust=0.5, fontsize=20*scaleFigModParams)
+}
+
+
+
+ 
+pl <- pl +
+  geom_segment(aes(x = 0, y = 0 + offsetAxis, xend = 166.2, yend = 0 + offsetAxis), size = 2*scaleFigModParams, color = "black") +
+  geom_segment(aes(x = 166.2 - 0, y = 0 + offsetAxis, xend = 166.2 - 0, yend = 0.1 + offsetAxis), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "0", x = 166.2 - 0, y = -0.2 + offsetAxis), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 25, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 25, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-25", x = 166.2 - 25, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 50, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 50, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-50", x = 166.2 - 50, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 75, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 75, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-75", x = 166.2 - 75, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 100, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 100, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-100", x = 166.2 - 100, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 125, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 125, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-125", x = 166.2 - 125, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 150, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 150, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "-150", x = 166.2 - 150, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "Time  [Ma]", x = 166.2 - 82, y = (-0.5 + offsetAxis)*scaleFigModParams), size = 18*scaleFigModParams, color = "black") +
+  theme_transparent()
+
+pl
+```
+
+```{r fig1-MammalBackBone-modelParameters, dev.args=list(colormodel="rgb"), dpi=600, fig.width=44*scaleFigModParams, fig.height=54*scaleFigModParams, eval=evalFig1}
+
+pl <- PCMTreePlot(treeBackbone, size= 10*scaleFigModParams, palette = palette) #+ geom_nodelab(size = 2, angle = 90)
+
+# insets scatter-plots of the tips belonging to each part
+#pl <- inset(pl, scatterPlotsTips, width=width*1.25, height = height*1.25, hjust = hjust - 1.4*width, vjust = 1.5*vjust)
+
+# insets ellipse-plots at epochs
+#for(insets in ellipsePlots) {
+#  if(length(insets) > 0)
+#    pl <- inset(pl, insets, width=width*1.25, height = height*1.25, hjust = hjust, vjust = 1.5*vjust)
+#}
+
+hjustModelParamPlots <- hjust + 2 + c(-18, rep(-30, length(modelParamPlots) - 1))
+vjustModelParamPlots <- rep(1 * vjust, length(modelParamPlots))
+vjustModelParamPlots[3] <- 2.6*vjust
+pl <- inset(pl, modelParamPlots, width=5*width, height = height/1.6,
+            hjust = hjustModelParamPlots, vjust = vjustModelParamPlots,
+            x = "branch")
+pl <- inset(pl, X0Plot[1], width = width, height = height/2,
+            hjust = hjust + 14,
+            vjust = -1*vjust, x = "branch")
+
+dtNodeRegimesBackbone <- PCMTreeDtNodes(treeBackbone)
+
+startingNodeRegimesReal <-
+  dtNodeRegimesBackbone[
+    !sapply(endNodeLab, startsWith, "i_"), 
+    list(node = endNode[which.min(endTime)], lab = endNodeLab[which.min(endTime)]), by = part]
+
+
+# Offsets are specific to the fit, so they have to be adjusted for other fits
+offsets <- startingNodeRegimesReal[, as.integer(part)]
+names(offsets) <- startingNodeRegimesReal[, lab]
+
+offsets[c("Cetartiodactyla", "Microchiroptera")] <- 2
+offsets[c("CricetidaeG1", "MuridaeG1", "Haplorrhini", "HystricognathiG1", "SciuridaeG1", "Soricidae")] <- 3
+offsets[c("MarmotiniG1", "Cercopithecidae")] <- 4
+
+ 
+for(i in seq_len(nrow(startingNodeRegimesReal))) {
+  regimei <- startingNodeRegimesReal[i, part]
+  regimeLab <- startingNodeRegimesReal[i, lab]
+  nodei <- startingNodeRegimesReal[i, node]
+  labi <- startingNodeRegimesReal[i, lab]
+  # use Mammalia instead of Theria for the root
+  if(as.character(regimei) == "1") {
+    labi <- PCMTreeGetLabels(tree)[PCMTreeNumTips(tree) + 1]
+  }
+  pl <- pl + geom_cladelabel(nodei, labi,
+                             color = palette[as.character(regimei)],
+                             offset=42 + 6.8*offsets[regimeLab], 
+                             barsize=5*scaleFigModParams, angle=90,
+                             extend = .3,
+                             offset.text=1.2, hjust=0.5, fontsize=20*scaleFigModParams)
+}
+
+
+
+ 
+pl <- pl +
+  geom_segment(aes(x = 0, y = 0 + offsetAxis, xend = 166.2, yend = 0 + offsetAxis), size = 2*scaleFigModParams, color = "black") +
+  geom_segment(aes(x = 166.2 - 0, y = 0 + offsetAxis, xend = 166.2 - 0, yend = 0.1 + offsetAxis), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "0", x = 166.2 - 0, y = -0.2 + offsetAxis), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 25, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 25, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-25", x = 166.2 - 25, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 50, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 50, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-50", x = 166.2 - 50, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 75, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 75, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-75", x = 166.2 - 75, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 100, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 100, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-100", x = 166.2 - 100, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 125, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 125, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-125", x = 166.2 - 125, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 150, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 150, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "-150", x = 166.2 - 150, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "Time  [Ma]", x = 166.2 - 82, y = (-0.5 + offsetAxis)*scaleFigModParams), size = 18*scaleFigModParams, color = "black") +
+  theme_transparent()
+
+pl
+```
+
+
+```{r fig2-SearchHistoryMammalTree, fig.width=10.1, fig.height=7.25, eval=evalFig2}
+plList <- PlotSearchHistory(
+  fitMappings, layout = 'fan', open.angle = 2, size=.25, alpha=.5,
+  sizeGreyNodepoints = 2.0, 
+  sizeColorNodepoints = 6, 
+  sizeBlackAllowedModelTypes = 2.0, 
+  sizeColorAllowedModelTypes = 2.8, 
+  sizeRankInQueue = 4.0,
+  vjustBlackAllowedModelTypes = -1.4,
+  vjustColorAllowedModelTypes = -1.8)
+
+plList <- plList[!sapply(plList, is.null)]
+
+dtCladePartition <- data.table(node=seq_len(PCMTreeNumNodes(inferredTree)))
+setkey(dtCladePartition, node)
+
+dtCladePartition[node %in% PCMTreeGetPartition(inferredTree), selected:=TRUE]
+dtCladePartition[list(PCMTreeGetPartition(inferredTree)), 
+                 regimeLETTER:=LETTERS[as.integer(attr(inferredModel, "mapping"))]]      
+
+
+plFinal <- PCMTreePlot(inferredTree, layout = 'fan', open.angle = 2, size=.25, alpha = .5, palette = palette) %<+% dtCladePartition +
+  geom_nodepoint(aes(shape=selected), size=6, na.rm = TRUE) + 
+  geom_text(aes(label=regimeLETTER), color="black", size=4) +
+  ggtitle(paste0("FINAL: AIC=", round(AIC(inferredModel)),
+                   ", logLik=", round(logLik(inferredModel)),
+                   ", p=", PCMParamCount(inferredModel, TRUE, TRUE)))
+    
+plList[[14]] <- plFinal
+
+cowplot::plot_grid(
+  plotlist = lapply(plList[1:6],
+                    function(p) p + theme(plot.title = element_text(size=12))),
+  nrow=2, ncol = 3)
+```
+```{r fig2-1-SearchHistoryMammalTree, fig.width=10.1, fig.height=11, eval=evalFig2}
+cowplot::plot_grid(
+  plotlist = lapply(plList[7:14],
+                    function(p) p + theme(plot.title = element_text(size=12))),
+  nrow=3, ncol = 3)
+```
+
+```{r fig3-phylopic-annotation-tips, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=7.58, fig.height=8.24, eval=TRUE}
+treeWithAnimals <- treeBackbone
+
+dtTipRegimes <- data.table(
+  node = 1:12, 
+  regime = PCMTreeGetPartRegimes(treeWithAnimals)[
+    PCMTreeGetPartsForNodes(treeWithAnimals, 1:12)]
+)
+
+# for regimes 1 3 5 we want to have several images. Thus we need singleton
+# nodes close to the corresponding tips
+PCMTreeInsertSingletons(treeWithAnimals, nodes = c(10, 8, 9), positions = rep(0.3, 3))
+PCMTreeInsertSingletons(treeWithAnimals, nodes = c(10, 8, 9), positions = rep(0.2, 3))
+PCMTreeInsertSingletons(treeWithAnimals, nodes = c(10, 9), positions = rep(0.1, 2))
+
+
+dtNodeRegimesBackbone <- PCMTreeDtNodes(treeWithAnimals)
+
+startingNodeRegimesReal <-
+  dtNodeRegimesBackbone[
+    !sapply(endNodeLab, startsWith, "i_"), 
+    list(node = endNode[which.min(endTime)], 
+         lab = endNodeLab[which.min(endTime)]), by = part]
+
+startingNodeRegimesReal[, regime:=PCMTreeGetPartRegimes(treeWithAnimals)[PCMTreeGetPartsForNodes(treeWithAnimals, node)]]
+
+# Offsets are specific to the fit, so they have to be adjusted for other fits
+offsets <- startingNodeRegimesReal[, as.integer(regime)]
+names(offsets) <- startingNodeRegimesReal[, lab]
+
+offsets[c("Cetartiodactyla", "Microchiroptera")] <- 2
+offsets[c("Haplorrhini", "HystricognathiG1", "CricetidaeG1", "Soricidae")] <- 3
+offsets[c("MarmotiniG1", "Cercopithecidae", "SciuridaeG1", "MuridaeG1")] <- 4
+offsets[c("MarmotiniG1")] <- 5
+
+pl <- PCMTreePlot(treeWithAnimals, size = 1, palette = palette)
+ 
+for(i in seq_len(nrow(startingNodeRegimesReal))) {
+  regimei <- startingNodeRegimesReal[i, regime]
+  regimeLab <- startingNodeRegimesReal[i, lab]
+  nodei <- startingNodeRegimesReal[i, node]
+  labi <- startingNodeRegimesReal[i, lab]
+  # use Mammalia instead of Theria for the root
+  if(as.character(regimei) == "1") {
+    labi <- "Mammalia"
+  }
+  pl <- pl + geom_cladelabel(
+    nodei, labi,
+    color = palette[as.character(regimei)],
+    offset = -0.8 + 6.8*offsets[regimeLab], 
+    barsize=1.5, angle=90,
+    extend = .35,
+    offset.text=1.2, hjust=0.5, fontsize=2.7
+    )
+  
+  if(as.character(regimei) == "1") {
+    pl <- pl + geom_cladelabel(
+      nodei, labi,
+    color = "white",
+    offset = 20,
+    barsize=1.5, angle=90,
+    extend = .35,
+    offset.text=1.2, hjust=0.5, fontsize=2.7
+    )
+  }
+}
+
+
+dtPhylopic <- rbindlist(list(
+  data.table(
+    itemNo = 1, regime = 9, species = "Cricetidae", by = "Natasha Vitek", 
+    id = "81930c02-5f26-43f7-9c19-e9831e780e53", size = 512, license = "PDD 1.0", 
+    scaleSize = .05, hjust = -8, vjust = 0, angle = 0),
+  data.table(
+    itemNo = 1, regime = 7, species = "Hystricognathi", by = "Zimices", 
+    id = "8d4497e7-a1b4-49e8-9e02-23db5f9aa37c", size = 512, license = "CCASAU 3.0", 
+    scaleSize = .05, hjust = -8, vjust = 0, angle = 0),
+  data.table(
+    itemNo = 1, regime = 11, species = "Muridae", by = "Daniel Jaron", 
+    id = "92989e35-4e68-4a2d-b3a2-191ba9da671a", size = 512, license = "PDD 1.0", 
+    scaleSize = .05, hjust = -4, vjust = 0, angle = 0),
+  data.table(
+    itemNo = 1, regime = 3, species = "Haplorrhini (1)", by = "Gareth Monger", 
+    id = "24230275-1bfa-4ec2-a946-ca1ececdf216", size = 512, license = "CCASAU 3.0", 
+    scaleSize = .035, hjust = -3, vjust = -0.2, angle = 0),
+  data.table(
+    itemNo = 2, regime = 3, species = "Haplorrhini (2, Homo sapiens sapiens)", by = "T. Michael Keesey", 
+    id = "2b4c32f6-99d0-43ba-9180-8013aa5bccd2", size = 512, license = "PDD 1.0", 
+    scaleSize = .065, hjust = -3, vjust = 0, angle = 0),
+  data.table(
+    itemNo = 1, regime = 10, species = "Cercopithecidae", by = "(uncredited)", 
+    id = "eccbb404-c99f-41f9-8785-01a7f57f1269", size = 512, license = "PDD 1.0", 
+    scaleSize = .07, hjust = 6, vjust = -0.1, angle = 0),
+  data.table(
+    itemNo = 1, regime = 12, species = "Marmotini ", by = "T. Michael Keesey", 
+    id = "61440e34-7d24-4607-8479-2708ac45663f", size = 512, license = "PDD 1.0", 
+    scaleSize = .04, hjust = 4, vjust = 0.05, angle = 0),
+  data.table(
+    itemNo = 1, regime = 5, species = "Cetartiodactyla (1, Artiodactyla)", by = "T. Michael Keesey", 
+    id = "407f51d5-aa40-4e71-a5a7-7a6d6f328b5d", size = 512, license = "PDD 1.0", 
+    scaleSize = .06, hjust = -12, vjust = 0, angle = 0),
+  data.table(
+    itemNo = 2, regime = 5, species = "Cetartiodactyla (2, Cetacea)", by = "Scott Hartman", 
+    id = "e68270c1-3091-4aee-92ae-51341a40e94a", size = 512, license = "PDD 1.0", 
+    scaleSize = .12, hjust = -12, vjust = -0.5, angle = 0),
+  data.table(
+    itemNo = 3, 
+    regime = 5, 
+    species = "Cetartiodactyla (3, Hippopotamus amphibius)", 
+    by = "Jan A. Venter, Herbert H. T. Prins, David A. Balfour and Rob Slotow (vectorized by T. Michael Keesey)", 
+    id = "6336f90c-8f02-48f5-94d1-1d85c0100473",
+    size = 512, 
+    license = "CCASAU 3.0", 
+    scaleSize = .09, hjust = -4, vjust = 0.06, angle = 0), 
+  data.table(
+    itemNo = 1, regime = 4, species = "Microchiroptera", by = "Yan Wong", 
+    id = "18bfd2fc-f184-4c3a-b511-796aafcc70f6", size = 512, license = "PDD 1.0", 
+    scaleSize = .04, hjust = -8, vjust = 0, angle = 0),
+  data.table(
+    itemNo = 1, regime = 6, species = "Soricidae", by = "Becky Barnes", 
+    id = "822c549b-b29b-47eb-9fe3-dc5bbb0abccb", size = 512, license = "PDD 1.0", 
+    scaleSize = .04, hjust = -6, vjust = 0, angle = 0),
+  data.table(
+    itemNo = 1, regime = 8, species = "Sciuridae", by = "Catherine Yasuda", 
+    id = "5ebe5f2c-2407-4245-a8fe-397466bb06da", size = 512, license = "PDD 1.0", 
+    scaleSize = .036, hjust = -2, vjust = 0, angle = 0),
+  data.table(
+    itemNo = 1, regime = 1, species = "Feliformia", by = "(uncredited)",
+    id = "ec56fa32-947b-4f0c-976b-c456132f2d6e", size = 512, license = "PDD 1.0", 
+    scaleSize = .05, hjust = 8, vjust = -0.16, angle = 0),
+  data.table(
+    itemNo = 2, regime = 1, species = "Diprotodontia", by = "Michael Scroggie",
+    id = "f5592cab-cc61-4aab-b1dd-fba7cd2df7c9", size = 512, license = "PDD 1.0", 
+    scaleSize = .06, hjust = -3, vjust = -0.45, angle = 0),
+  data.table(
+    itemNo = 3, regime = 1, species = "Elephantidae", by = "T. Michael Keesey", 
+    id = "a15244a4-ecaa-4891-b870-31e5c8d9b5b3", size = 512, license = "PDD 1.0", 
+    scaleSize = .12, hjust = -34, vjust = -0.15, angle = 0),
+  data.table(
+    itemNo = 1, regime = 2, species = "Euarchonta", 
+    by = "T. Michael Keesey (after Joseph Wolf)", 
+    id = "88a07585-846a-405d-9195-c15c010e7443", size = 512, license = "PDD 1.0", 
+    scaleSize = .05, hjust = -14, vjust = -0.1, angle = 0)))
+
+
+dtPhylopic <- merge(dtTipRegimes, dtPhylopic, by = "regime")[, .SD, keyby=node]
+dtPhylopic[, tip:=node]
+dtPhylopic[, node:={
+  if(itemNo == 1) {
+    tip
+  } else if(itemNo == 2) {
+    n <- PCMTreeGetParent(treeWithAnimals, node)
+    print(n)
+    as.integer(n)
+  } else {
+    n <- PCMTreeGetParent(treeWithAnimals, PCMTreeGetParent(treeWithAnimals, node))
+    print(n)
+    as.integer(n)
+  }
+}, by=list(tip, itemNo)]
+
+# example image url:
+#http://phylopic.org/assets/images/submissions/88a07585-846a-405d-9195-c15c010e7443.64.png
+
+dtPhylopic[
+  , 
+  url:=paste0("http://phylopic.org/assets/images/submissions/", id, ".",size,".png")]
+
+
+pl <- pl %<+% dtPhylopic
+
+pl <- pl + 
+  geom_image(
+    mapping = aes(
+      x = x + 45 + (itemNo-1)*18 + hjust, y = y + vjust, image = url, 
+      size = I(scaleSize)))
+
+scaleFigModParams <- 0.1
+pl <- pl +
+  geom_segment(aes(x = 0, y = 0 + offsetAxis, xend = 166.2, yend = 0 + offsetAxis), size = 2*scaleFigModParams, color = "black") +
+  geom_segment(aes(x = 166.2 - 0, y = 0 + offsetAxis, xend = 166.2 - 0, yend = 0.1 + offsetAxis), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "0", x = 166.2 - 0, y = -0.2 + offsetAxis), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 25, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 25, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-25", x = 166.2 - 25, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 50, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 50, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-50", x = 166.2 - 50, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 75, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 75, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-75", x = 166.2 - 75, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 100, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 100, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-100", x = 166.2 - 100, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 125, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 125, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-125", x = 166.2 - 125, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 150, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 150, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "-150", x = 166.2 - 150, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "Time  [Ma]", x = 166.2 - 82, y = (-0.5 + offsetAxis)*scaleFigModParams), size = 18*scaleFigModParams, color = "black") +
+  theme_transparent()
+pl
+```
+
+```{r fig3-MammalBackBone-Ribbons, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=5.24, fig.height=7.67, eval=FALSE}
+inferredModel <- bestFitToDataWithSEs$modelOptim
+inferredMapping <- attr(inferredModel, "mapping")
+
+k <- PCMNumTraits(inferredModel)
+inferredTreeHD <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochsHD
+treeBackboneHD <- bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochsHD
+epochsHD <- bestFitToDataWithSEs$epochsHD
+
+tableBSFits <- fits_bootstrap_MGPM_A_F_best_clade_RR_HD[!is.na(logLik)] # & logLik > logLikSimulatedModel
+        
+
+dtBody <- ExtractBSDataForTraitValue(
+  tableBSFits = tableBSFits,
+  inferredModel = inferredModel,
+  inferredTree = inferredTreeHD,
+  inferredBackboneTree = treeBackboneHD,
+  epochs = epochsHD,
+  traitIndex = 1L,
+  traitName = "BodyMass"
+)
+
+dtBrain <- ExtractBSDataForTraitValue(
+  tableBSFits = tableBSFits,
+  inferredModel = inferredModel,
+  inferredTree = inferredTreeHD,
+  inferredBackboneTree = treeBackboneHD,
+  epochs = epochsHD,
+  traitIndex = 2L,
+  traitName = "BrainMass"
+)
+
+dtBrainOnBody <- ExtractBSDataForTraitRegression(
+  tableBSFits = tableBSFits,
+  inferredModel = inferredModel,
+  inferredTree = inferredTreeHD,
+  inferredBackboneTree = treeBackboneHD,
+  epochs = epochsHD,
+  traitIndexX = 1L,
+  traitNameX = "BodyMass",
+  traitIndexY = 2L,
+  traitNameY = "BrainMass"
+)
+
+dtBrainBodyCombined <- merge(
+  dtBody, dtBrain,
+  by = intersect(names(dtBody), names(dtBrain))
+)
+
+dtBrainBodyCombined <- merge(
+  dtBrainBodyCombined, 
+  dtBrainOnBody,
+  by = intersect(names(dtBrainBodyCombined), names(dtBrainOnBody))
+)
+
+dtRectanglesForParts <- dtBrainBodyCombined[
+  , {
+    i <- which.max(timeNode)
+    list(
+      node = node[i], 
+      nodeLab = nodeLab[i],
+      timeNode = timeNode[i], 
+      regimeNode = regimeNode[i], 
+      regimeFinal = regimeFinal[i],
+      timeInterval = sum(timeInterval))
+  },
+  keyby = list(partFinal, partNode)
+  ]
+
+dtRectanglesForParts[, modelTypeIndex:=inferredMapping[regimeFinal]]
+
+dtBSLinePlotsForParts <- dtBrainBodyCombined[
+  , list(
+    bsIndex = unlist(BrainMass.on.BodyMass.bs.Ids),
+    bsBody = unlist(BodyMass.bsValues),
+    bsBrain = unlist(BrainMass.bsValues),
+    bsSlope = unlist(BrainMass.on.BodyMass.bs.SlopeValues)),
+  by = list(partFinal, regimeFinal, node, partNode, regimeNode, timeNode)
+  ]
+
+palette <- PCMColorPalette(
+  PCMTreeNumParts(treeBackboneHD), as.character(PCMRegimes(treeBackboneHD)))
+
+maxTime <- max(PCMTreeNodeTimes(inferredTreeHD))
+
+dtTipValuesAndRegimes <- data.table(
+  tip = seq_len(PCMTreeNumTips(inferredTreeHD)), 
+  
+  regimeFinal = PCMTreeGetPartRegimes(inferredTreeHD)[
+    PCMTreeGetPartsForNodes(
+      inferredTreeHD, seq_len(PCMTreeNumTips(inferredTreeHD)))],
+  body = MGPMMammals::values[1, seq_len(PCMTreeNumTips(inferredTreeHD))],
+  brain = MGPMMammals::values[2, seq_len(PCMTreeNumTips(inferredTreeHD))]
+)
+
+dtTipMeanValuesAndRegimes <- dtTipValuesAndRegimes[
+  , {
+    bodyMean <- mean(body)
+    bodySE <- sqrt(var(body))/sqrt(.N)
+    brainMean <- mean(brain)
+    brainSE <- sqrt(var(brain))/sqrt(.N)
+    
+    list(
+      N = .N,
+      bodyMean = bodyMean,
+      bodySE = bodySE,
+      bodyMean.CI.lower = bodyMean - 1.96 * bodySE,
+      bodyMean.CI.upper = bodyMean + 1.96 * bodySE,
+      brainMean = brainMean,
+      brainSE = brainSE,
+      brainMean.CI.lower = brainMean - 1.96 * brainSE,
+      brainMean.CI.upper = brainMean + 1.96 * brainSE)
+  }, 
+  by = regimeFinal
+]
+
+plBodyBrain <- ggplot(dtBrainBodyCombined) +
+  geom_rect(
+    data = dtRectanglesForParts,
+    mapping = aes(
+      xmin = timeNode - timeInterval - maxTime, xmax = timeNode - maxTime, 
+      ymin = -3, ymax = 9, 
+      fill = factor(regimeNode)), alpha = .4) +
+  
+  geom_errorbar(
+    data = dtTipMeanValuesAndRegimes, 
+    mapping = aes(
+      x = 4, ymin = bodyMean.CI.lower, ymax = bodyMean.CI.upper),
+    color = "black", size = 0.8) + 
+  geom_point(
+    data = dtTipMeanValuesAndRegimes, 
+    mapping = aes(x = 4, y = bodyMean),
+    color = "black", size = 0.2) + 
+  
+  geom_errorbar(
+    data = dtTipMeanValuesAndRegimes, 
+    mapping = aes(
+      x = 10, ymin = brainMean.CI.lower, ymax = brainMean.CI.upper, 
+      color = factor(regimeFinal)),
+    color = "magenta", size = 0.8) + 
+  geom_point(
+    data = dtTipMeanValuesAndRegimes, 
+    mapping = aes(x = 10, y = brainMean),
+    color = "magenta", size = 0.2) + 
+  
+  geom_text(
+    data = dtTipMeanValuesAndRegimes, 
+    mapping = aes(x = 20, y = 3.65, label = N, color = factor(regimeFinal)), 
+    size = 2, hjust = "right") +
+
+  geom_text(
+    data = dtRectanglesForParts[regimeNode == 1], 
+    mapping = aes(
+      x = 20, y = 4.8, 
+      label = paste0(regimeFinal, ".", LETTERS[modelTypeIndex]), 
+      color = factor(regimeFinal)), 
+    size = 2, hjust = "right") +
+  
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(
+    data = dtBSLinePlotsForParts,
+    mapping = aes(x = timeNode - maxTime, y = bsBody, group = bsIndex), 
+    col="grey5", alpha = 0.2, size = .2) +
+  geom_line(
+    data = dtBSLinePlotsForParts,
+    mapping = aes(x = timeNode - maxTime, y = bsBrain, group = bsIndex), 
+    col="magenta", alpha = 0.14, size = .2) +
+  geom_line(aes(
+    x = timeNode - maxTime, y = BodyMass.value), size = .7) +
+  geom_line(aes(x = timeNode - maxTime, y = BrainMass.value), size=.5, color = "magenta") +
+  
+  # geom_label(
+  #   data = dtRectanglesForParts,
+  #   mapping = aes(
+  #     x = timeNode - timeInterval - maxTime + 6, y = 4.8,
+  #     label = as.character(regimeNode),
+  #     color = factor(regimeNode)), alpha = .5, 
+  #   label.padding = unit(0.125, "lines"), label.r = unit(0.22, "lines"), 
+  #   label.size = 0.4, size = 2) +
+  
+  scale_y_continuous(name = "Brain mass (magenta) and body mass (black) [lg grams]") +
+  coord_cartesian(ylim = c(-1.1, 5.6), xlim = c(-166, 14)) +
+  theme_bw() +
+  theme(
+    legend.position = "none", axis.text.y.right = element_text(),
+    axis.text = element_text(size = 7), #axis.title.y = element_blank(),
+    axis.title = element_text(size = 8)
+  ) +
+  facet_grid(
+    factor(regimeFinal, levels = c(2, 9, 11, 7, 8, 12, 3, 10, 5, 1, 4, 6))~.) +
+  theme(strip.background = element_blank(),
+   strip.text.y = element_blank()) + 
+  xlab("Time [Ma]")
+
+
+dtTipValuesSlopesForRegimes <- dtTipValuesAndRegimes[
+  , {
+    linmod = lm(brain~body)
+    ci <- confint(linmod)[2,]
+    list(slope = coef(linmod)[2], CI.lower = ci[1], CI.upper = ci[2])
+  },
+  by = regimeFinal
+]
+
+plSlope <- ggplot(dtBrainBodyCombined) +
+  geom_rect(
+    data = dtRectanglesForParts,
+    mapping = aes(
+      xmin = timeNode - timeInterval - maxTime, xmax = timeNode - maxTime, 
+      ymin = -2, ymax = 7, 
+      fill = factor(regimeNode)), alpha = .4) +
+  
+  geom_errorbar(
+    data = dtTipValuesSlopesForRegimes, 
+    mapping = aes(x = 4, ymin = CI.lower, ymax = CI.upper),
+    size = 0.8) + 
+  geom_point(
+    data = dtTipValuesSlopesForRegimes, 
+    mapping = aes(x = 4, y = slope),
+    size = 0.2) + 
+  
+  geom_text(
+    data = dtTipMeanValuesAndRegimes, 
+    mapping = aes(x = 20, y = .74, label = N, color = factor(regimeFinal)), 
+    size = 2, hjust = "right") +
+
+  geom_text(
+    data = dtRectanglesForParts[regimeNode == 1], 
+    mapping = aes(
+      x = 20, y = .96, 
+      label = paste0(regimeFinal, ".", LETTERS[modelTypeIndex]), 
+      color = factor(regimeFinal)), 
+    size = 2, hjust = "right") +
+  
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(
+    data = dtBSLinePlotsForParts,
+    mapping = aes(x = timeNode - maxTime, y = bsSlope, group = bsIndex), 
+    col="grey15", alpha = 0.2, size = 0.2) +
+  geom_line(aes(x = timeNode - maxTime, y = BrainMass.on.BodyMass.slope), size=.7) +
+  
+  # geom_label(
+  #   data = dtRectanglesForParts,
+  #   mapping = aes(
+  #     x = timeNode - timeInterval - maxTime + 6, y = .96,
+  #     label = as.character(regimeNode),
+  #     color = factor(regimeNode)), alpha = .5, 
+  #   label.padding = unit(0.125, "lines"), label.r = unit(0.22, "lines"), 
+  #   label.size = 0.4, size = 2) +
+  
+  scale_y_continuous(name = "Regression slope of brain- on body-mass [no units]") +
+  coord_cartesian(ylim = c(-0.1, 1.1), xlim = c(-166, 14)) +
+  theme_bw() +
+  theme(
+    legend.position = "none", axis.text.y.right = element_text(),
+    axis.text = element_text(size = 7), #axis.title.y = element_blank(),
+    axis.title = element_text(size = 8)
+  ) +
+  facet_grid(
+    factor(regimeFinal, levels = c(2, 9, 11, 7, 8, 12, 3, 10, 5, 1, 4, 6))~.) +
+  theme(strip.background = element_blank(),
+   strip.text.y = element_blank()) + 
+  xlab("Time [Ma]")
+
+cowplot::plot_grid(plBodyBrain, plSlope)
+```
+
+
+```{r fig-bootstrap-modelTypeFreqs, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=5.24, fig.height=8.63, eval=TRUE}
+inferredModel <- bestFitToDataWithSEs$modelOptim
+inferredMapping <- attr(inferredModel, "mapping")
+k <- PCMNumTraits(inferredModel)
+inferredTreeHD <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochsHD
+treeBackboneHD <- bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochsHD
+epochsHD <- bestFitToDataWithSEs$epochsHD
+
+dtTipValuesAndRegimes <- data.table(
+  tip = seq_len(PCMTreeNumTips(inferredTreeHD)), 
+  
+  regimeFinal = PCMTreeGetPartRegimes(inferredTreeHD)[
+    PCMTreeGetPartsForNodes(
+      inferredTreeHD, seq_len(PCMTreeNumTips(inferredTreeHD)))],
+  body = MGPMMammals::values[1, seq_len(PCMTreeNumTips(inferredTreeHD))],
+  brain = MGPMMammals::values[2, seq_len(PCMTreeNumTips(inferredTreeHD))]
+)
+
+dtTipMeanValuesAndRegimes <- dtTipValuesAndRegimes[
+  , {
+    bodyMean <- mean(body)
+    bodySE <- sqrt(var(body))/sqrt(.N)
+    brainMean <- mean(brain)
+    brainSE <- sqrt(var(brain))/sqrt(.N)
+    
+    list(
+      N = .N,
+      bodyMean = bodyMean,
+      bodySE = bodySE,
+      bodyMean.CI.lower = bodyMean - 1.96 * bodySE,
+      bodyMean.CI.upper = bodyMean + 1.96 * bodySE,
+      brainMean = brainMean,
+      brainSE = brainSE,
+      brainMean.CI.lower = brainMean - 1.96 * brainSE,
+      brainMean.CI.upper = brainMean + 1.96 * brainSE)
+  }, 
+  by = regimeFinal
+]
+  
+maxTime <- max(PCMTreeNodeTimes(inferredTreeHD))
+
+tableBSFits <- fits_bootstrap_MGPM_A_F_best_clade_RR_HD[!is.na(logLik)] #  & logLik > logLikSimulatedModel
+
+dtBSTprFprGlobal <- ExtractBSDataTprFprGlobal(
+  tableBSFits = tableBSFits,
+  inferredModel = inferredModel,
+  inferredTree = inferredTreeHD,
+  inferredBackboneTree = treeBackboneHD,
+  epochs = epochsHD)
+
+plNumParts <- ggplot(dtBSTprFprGlobal) +
+  geom_line(
+    mapping = aes(x = epoch - maxTime, y = bsNumParts, group = bsIndex), 
+    col="grey15", alpha = 0.2, size = 0.2) +
+  geom_line(aes(x = epoch - maxTime, y = numParts), size=.7) +
+  scale_y_continuous(name = "R") +
+  coord_cartesian(ylim = c(-0.5, 12.5), xlim = c(-166, 14)) +
+  xlab("Time [Ma]") +
+  theme_bw() +
+  theme(
+    legend.position = "none", axis.text.y.right = element_text(),
+    axis.text = element_text(size = 7), 
+    axis.title = element_text(size = 8)
+  )
+
+plTprFpr <- ggplot(dtBSTprFprGlobal) +
+  geom_line(
+    mapping = aes(x = epoch - maxTime, y = bsTpr, group = bsIndex), 
+    col="grey15", alpha = 0.2, size = 0.2) +
+  geom_line(
+    mapping = aes(x = epoch - maxTime, y = bsFpr, group = bsIndex), 
+    col="magenta", alpha = 0.2, size = 0.2) +
+  
+  scale_y_continuous(name = "T(F)PR") +
+  
+  coord_cartesian(ylim = c(-0.1, 1.1), xlim = c(-166, 14)) +
+  xlab("Time [Ma]") +
+  theme_bw() +
+  theme(
+    legend.position = "none", axis.text.y.right = element_text(),
+    axis.text = element_text(size = 7), 
+    axis.title = element_text(size = 8)
+  )
+
+
+dtModelTypeFreqs <- ExtractBSDataModelTypeFreqs(
+  tableBSFits = tableBSFits,
+  inferredModel = inferredModel,
+  inferredTree = inferredTreeHD,
+  inferredBackboneTree = treeBackboneHD,
+  epochs = epochsHD)
+
+dtRectanglesForParts <- dtModelTypeFreqs[
+  , {
+    i <- which.max(timeNode)
+    list(
+      node = node[i], 
+      nodeLab = nodeLab[i],
+      timeNode = timeNode[i], 
+      regimeNode = regimeNode[i], 
+      regimeFinal = regimeFinal[i],
+      timeInterval = sum(timeInterval))
+  },
+  keyby = list(partFinal, partNode, modelTypeIndex, inferredModelType)
+  ][inferredModelType==1]
+
+dtRectanglesForParts[, inferredModelType:=inferredMapping[regimeFinal]]
+
+dtBSLinePlotsForParts <- dtModelTypeFreqs[
+  , list(
+    inferredModelType,
+    bsIndex = unlist(bs.Ids),
+    bsModelTypeFreq = unlist(bsModelTypeFreqs)),
+  by = list(partFinal, regimeFinal, node, partNode, regimeNode, timeNode, modelTypeIndex)
+  ]
+
+palette <- PCMColorPalette(
+  PCMTreeNumParts(treeBackboneHD), as.character(PCMRegimes(treeBackboneHD)))
+
+plModelTypeFreqs <- ggplot(dtModelTypeFreqs) +
+  geom_rect(
+    data = dtRectanglesForParts,
+    mapping = aes(
+      xmin = timeNode - timeInterval - maxTime, xmax = timeNode - maxTime, 
+      ymin = -1, ymax = 2, 
+      fill = factor(regimeNode)), alpha = .4) +
+  geom_text(
+    data = dtRectanglesForParts[regimeNode == 1], 
+    mapping = aes(
+      x = 20, y = .94, 
+      label = paste0(regimeFinal, ".", LETTERS[inferredModelType]), 
+      color = factor(regimeFinal)), 
+    size = 2, hjust = "right") +
+  geom_text(
+    data = dtTipMeanValuesAndRegimes,
+    mapping = aes(x = 20, y = .74, label = N, color = factor(regimeFinal)),
+    size = 2, hjust = "right") +
+  
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(
+    data = dtBSLinePlotsForParts[inferredModelType == 1],
+    mapping = aes(x = timeNode - maxTime, y = bsModelTypeFreq, group = bsIndex), 
+    col="grey15", alpha = 0.2, size = 0.2) +
+  
+  # geom_label(
+  #   data = dtRectanglesForParts,
+  #   mapping = aes(
+  #     x = timeNode - timeInterval - maxTime + 6, y = .96,
+  #     label = as.character(regimeNode),
+  #     color = factor(regimeNode)), alpha = .5, 
+  #   label.padding = unit(0.125, "lines"), label.r = unit(0.22, "lines"), 
+  #   label.size = 0.4, size = 2) +
+  
+  scale_y_continuous(name = "Bootstrap true positive rate of the MGPM* model type for each regime among the nodes in the regime [no units]") +
+  coord_cartesian(ylim = c(-0.1, 1.1), xlim = c(-166, 14)) +
+  theme_bw() +
+  theme(
+    legend.position = "none", axis.text.y.right = element_text(),
+    axis.text = element_text(size = 7), #axis.title.y = element_blank(),
+    axis.title = element_text(size = 8)
+  ) +
+  facet_grid(
+    factor(regimeFinal, levels = c(2, 9, 11, 7, 8, 12, 3, 10, 5, 1, 4, 6))~.) +
+  theme(strip.background = element_blank(),
+   strip.text.y = element_blank()) + 
+  xlab("Time [Ma]")
+
+dtTprWithinParts <- ExtractBSDataTprWithinParts(
+  tableBSFits = tableBSFits,
+  inferredModel = inferredModel,
+  inferredTree = inferredTreeHD,
+  inferredBackboneTree = treeBackboneHD,
+  epochs = epochsHD)
+
+dtRectanglesForParts <- dtTprWithinParts[
+  , {
+    i <- which.max(timeNode)
+    list(
+      node = node[i], 
+      nodeLab = nodeLab[i],
+      timeNode = timeNode[i], 
+      regimeNode = regimeNode[i], 
+      regimeFinal = regimeFinal[i],
+      timeInterval = sum(timeInterval))
+  },
+  keyby = list(partFinal, partNode)
+  ]
+
+dtRectanglesForParts[, inferredModelType:=inferredMapping[regimeFinal]]
+
+
+dtBSLinePlotsForParts <- dtTprWithinParts[
+  , list(
+    bsIndex = unlist(bs.Ids),
+    bsTprWithinPart = unlist(bsTprWithinPart)),
+  by = list(partFinal, regimeFinal, node, partNode, regimeNode, timeNode) ]
+
+palette <- PCMColorPalette(
+  PCMTreeNumParts(treeBackboneHD), as.character(PCMRegimes(treeBackboneHD)))
+
+maxTime <- max(PCMTreeNodeTimes(inferredTreeHD))
+
+plTprWithinParts <- ggplot(dtTprWithinParts) +
+  geom_rect(
+    data = dtRectanglesForParts,
+    mapping = aes(
+      xmin = timeNode - timeInterval - maxTime, xmax = timeNode - maxTime, 
+      ymin = -1, ymax = 2, 
+      fill = factor(regimeNode)), alpha = .4) +
+  
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(
+    data = dtBSLinePlotsForParts,
+    mapping = aes(x = timeNode - maxTime, y = bsTprWithinPart, group = bsIndex), 
+    col="grey15", alpha = 0.2, size = 0.2) +
+  geom_text(
+    data = dtRectanglesForParts[regimeNode == 1], 
+    mapping = aes(
+      x = 20, y = .94, 
+      label = paste0(regimeFinal, ".", LETTERS[inferredModelType]), 
+      color = factor(regimeFinal)), 
+    size = 2, hjust = "right") +
+  geom_text(
+    data = dtTipMeanValuesAndRegimes,
+    mapping = aes(x = 20, y = .74, label = N, color = factor(regimeFinal)),
+    size = 2, hjust = "right") +
+  
+  # geom_label(
+  #   data = dtRectanglesForParts,
+  #   mapping = aes(
+  #     x = timeNode - timeInterval - maxTime + 6, y = .96,
+  #     label = as.character(regimeNode),
+  #     color = factor(regimeNode)), alpha = .5, 
+  #   label.padding = unit(0.125, "lines"), label.r = unit(0.22, "lines"), 
+  #   label.size = 0.4, size = 2) +
+  
+  scale_y_continuous(name = "True positive rate for a node-pair in the same regime in MGPM* to be identified as such by the bootstrap MGPM [no units]") +
+  coord_cartesian(ylim = c(-0.1, 1.1), xlim = c(-166, 14)) +
+  theme_bw() +
+  theme(
+    legend.position = "none", axis.text.y.right = element_text(),
+    axis.text = element_text(size = 7), #axis.title.y = element_blank(),
+    axis.title = element_text(size = 8)
+  ) +
+  facet_grid(
+    factor(regimeFinal, levels = c(2, 9, 11, 7, 8, 12, 3, 10, 5, 1, 4, 6))~.) +
+  theme(strip.background = element_blank(),
+   strip.text.y = element_blank()) + 
+  xlab("Time [Ma]")
+
+cowplot::plot_grid(plNumParts, plTprFpr, plTprWithinParts, plModelTypeFreqs, nrow = 2, labels = c("A", "B", "C", "D"), rel_heights = c(1.5, 12), label_size = 8)
+```
+
+
+```{r fig4-fan-tree, fig.width=2.5, fig.height=2.5}
+inferredModel <- bestFitToDataWithSEs$modelOptim
+inferredMapping <- attr(inferredModel, "mapping")
+inferredTree <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochs
+
+dtShifts <- data.table(node = PCMTreeGetPartition(inferredTree))
+dtShifts[, shiftPart:=PCMTreeGetPartsForNodes(inferredTree, node)]
+dtShifts[, shiftRegime:=PCMTreeGetPartRegimes(inferredTree)[shiftPart]]
+
+dtNodes <- PCMTreeDtNodes(inferredTree)
+dtNodes[, mapping:=inferredMapping[regime]]
+setkey(dtNodes, endNode)
+  
+selectedTips <- dtNodes[
+  endNode <= PCMTreeNumTips(inferredTree), 
+  list(node = endNode[floor(.N/1.6)]), by = regime]$node
+  
+dtNodes[
+  list(selectedTips), modelTypeLetter:=paste0(" ", regime, ".", LETTERS[mapping], " ")]
+  
+plTree <- PCMTreePlot(
+  inferredTree, layout = 'fan', open.angle = 4, size= .25, palette = palette)
+
+plTree <- plTree %<+% dtShifts %<+% 
+  dtNodes[!is.na(modelTypeLetter), list(node = endNode, modelTypeLetter)]
+
+plTree + 
+  geom_treescale(x = 0, y = 631, width = 166.2, offset = -18, fontsize = 1.6, linesize = 0.25) +
+  #geom_nodepoint(
+  #  aes(color = factor(shiftRegime)), shape = 21, fill="white", size=3, na.rm = TRUE) +
+  #geom_text(aes(label=as.character(shiftRegime), color = factor(shiftRegime)), size=1.6) +
+  geom_tiplab2(aes(label = modelTypeLetter), size = 2.5) +
+  scale_shape_manual(values=21) +
+  theme_transparent()
+```
+
+```{r fig4-fan-tree-and-data, fig.width=3.43, fig.height=3.43, eval=FALSE}
+inferredModel <- bestFitToDataWithSEs$modelOptim
+inferredMapping <- attr(inferredModel, "mapping")
+inferredTree <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochs
+
+dtShifts <- data.table(node = PCMTreeGetPartition(inferredTree))
+dtShifts[, shiftPart:=PCMTreeGetPartsForNodes(inferredTree, node)]
+dtShifts[, shiftRegime:=PCMTreeGetPartRegimes(inferredTree)[shiftPart]]
+
+dtNodes <- PCMTreeDtNodes(inferredTree)
+dtNodes[, mapping:=inferredMapping[regime]]
+setkey(dtNodes, endNode)
+  
+selectedTips <- dtNodes[
+  endNode <= PCMTreeNumTips(inferredTree), 
+  list(node = endNode[floor(.N/1.6)]), by = regime]$node
+  
+dtNodes[
+  list(selectedTips), modelTypeLetter:=paste0(" ", regime, ".", LETTERS[mapping], " ")]
+  
+plTree <- PCMTreePlot(
+  inferredTree, layout = 'fan', open.angle = 4, size= .25, palette = palette)
+
+plTree <- plTree %<+% dtShifts %<+% 
+  dtNodes[!is.na(modelTypeLetter), list(node = endNode, modelTypeLetter)]
+
+plTree <- plTree + 
+  geom_treescale(x = 0, y = 631, width = 166.2, offset = -18, fontsize = 1.6, linesize = 0.25) +
+  #geom_nodepoint(
+  #  aes(color = factor(shiftRegime)), shape = 21, fill="white", size=3, na.rm = TRUE) +
+  #geom_text(aes(label=as.character(shiftRegime), color = factor(shiftRegime)), size=1.6) +
+  geom_tiplab2(aes(label = modelTypeLetter), size = 2.5) +
+  scale_shape_manual(values=21) +
+  theme_transparent()
+
+dtTraitsReal <- data.table(
+  tip = seq_len(PCMTreeNumTips(inferredTree)), 
+  
+  regime = PCMTreeGetPartRegimes(inferredTree)[
+    PCMTreeGetPartsForNodes(
+      inferredTree, seq_len(PCMTreeNumTips(inferredTree)))],
+  x = MGPMMammals::values[1, seq_len(PCMTreeNumTips(inferredTree))],
+  y = MGPMMammals::values[2, seq_len(PCMTreeNumTips(inferredTree))]
+)
+
+plTraitsReal <- ggplot(dtTraitsReal[sample(seq_len(.N))]) +
+  geom_point(aes(x, y, color = factor(regime)), alpha = 0.4, size = 0.15) +
+  scale_color_manual(values = palette) +
+  #scale_shape_manual(values = structure(rep(seq_len(6), 2), names = as.character(seq_len(12)))) +
+  theme_grey() +
+  theme(legend.position = "none", axis.text = element_text(size = 6), axis.title = element_text(size = 7)) +
+  xlab("Body-mass [lg grams]") +
+  ylab("Brain-mass [lg grams]") +
+  coord_cartesian(xlim = c(0, 8), ylim = c(-1, 4))
+
+plEllipsesReal <- ggplot(dtTraitsReal[regime %in% c(1, 3, 10)]) +
+  stat_ellipse(aes(x, y, color = factor(regime)), alpha = 0.4, size = 0.4) +
+  geom_smooth(aes(x, y, color = factor(regime)), method = "lm", size = 0.4, se = FALSE) +
+  scale_color_manual(values = palette) +
+#  scale_shape_manual(values = structure(rep(seq_len(6), 2), names = as.character(seq_len(12)))) +
+  theme_grey() +
+  theme(legend.position = "none", axis.text = element_text(size = 6), axis.title = element_text(size = 7)) +
+  xlab("Body-mass [lg grams]") +
+  ylab("Brain-mass [lg grams]") +
+  coord_cartesian(xlim = c(0, 8), ylim = c(-1, 4))
+
+
+backboneTree <- bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochs
+
+dtTraitsSimul <- rbindlist(lapply(
+  PCMTreeGetPartNames(backboneTree), function(part) {
+    lineageTreeForPart <- PCMTreeBackbonePartition(backboneTree, part)
+    Mu <- PCMMean(lineageTreeForPart, model = inferredModel)
+    Var <- PCMVar(lineageTreeForPart, model = inferredModel)
+    
+    samp <- rmvnorm(100, mean = Mu, sigma = Var)
+    
+    data.table(
+      tip = NA_integer_, 
+      regime = PCMTreeGetPartRegimes(lineageTreeForPart)[PCMTreeGetPartsForNodes(lineageTreeForPart, 1)], 
+      x = samp[, 1], 
+      y = samp[, 2])
+  }
+))
+
+plEllipsesSimul <- ggplot(dtTraitsSimul[regime %in% c(1, 3, 10)]) +
+  stat_ellipse(aes(x, y, color = factor(regime)), alpha = 0.4, size = 0.4) +
+  geom_smooth(aes(x, y, color = factor(regime)), method = "lm", size = 0.4, se = FALSE) +
+  scale_color_manual(values = palette) +
+#  scale_shape_manual(values = structure(rep(seq_len(6), 2), names = as.character(seq_len(12)))) +
+  theme_grey() +
+  theme(legend.position = "none", axis.text = element_text(size = 6), axis.title = element_text(size = 7)) +
+  xlab("Body-mass [lg grams]") +
+  ylab("Brain-mass [lg grams]") +
+  coord_cartesian(xlim = c(0, 8), ylim = c(-1, 4))
+
+cowplot::plot_grid(plTree, plTraitsReal, plEllipsesReal, plEllipsesSimul, scale = c(1.08, 1, 1, 1), labels = LETTERS[1:4], label_size = 10)
+```
+
+```{r fig5-model-trajectory-plot, fig.width=3.43, fig.height=3.43, eval = FALSE}
+options(PCMBase.Skip.Singular = TRUE)
+
+set.seed(1)
+trajRegime1.1 <- PCMTrajectory(
+  X0 = inferredModel$X0, model = inferredModel,
+  tX = seq(0, 165, by = 10), tVar = c(10, 160),
+  sizeSamp = 10000)
+set.seed(1)
+trajRegime1.2 <- PCMTrajectory(
+  X0 = c(3.8, 2.8), model = inferredModel,
+  tX = seq(0, 165, by = 10), tVar = c(10, 160),
+  sizeSamp = 10000)
+
+trajRegime1 <- rbindlist(
+  list(trajRegime1.1$dtPlot[, cbind(.SD, X0 = 1L)], 
+       trajRegime1.2$dtPlot[, cbind(.SD, X0 = 2L)])
+)
+ 
+set.seed(1)
+trajRegime9.1 <- PCMTrajectory(
+  X0 = inferredModel$X0, model = inferredModel, regime = 9,
+  tX = seq(0, 165, by = 10), tVar = c(10, 160),
+  sizeSamp = 10000)
+set.seed(1)
+trajRegime9.2 <- PCMTrajectory(
+  X0 = c(3.8, 2.8), model = inferredModel, regime = 9,
+  tX = seq(0, 165, by = 10), tVar = c(10, 160),
+  sizeSamp = 10000)
+
+trajRegime9 <- rbindlist(
+  list(trajRegime9.1$dtPlot[, cbind(.SD, X0 = 1L)], 
+       trajRegime9.2$dtPlot[, cbind(.SD, X0 = 2L)])
+)
+
+trajRegimes <- rbindlist(list(trajRegime1, trajRegime9))
+
+plRegimes <- ggplot(data = trajRegimes) + 
+  geom_point(
+    data = trajRegimes[
+      , list(x1 = unique(x1), x2 = unique(x2)), 
+      keyby = list(regime, X0, t)],
+    mapping = aes(
+      x = x1, y = x2, group = factor(X0), color = factor(regime)), size = .1) +
+  geom_path(
+    data = trajRegimes[
+      , list(x1 = unique(x1), x2 = unique(x2)), 
+      keyby = list(regime, X0, t)],
+    mapping = aes(
+      x = x1, y = x2, group = factor(X0), color = factor(regime)), 
+    size = .25, alpha = 0.8,
+    arrow = arrow(
+      angle = 45, length = unit(.4, "line"), ends = "last", type = "closed")) +
+  stat_ellipse(
+    aes(x = xs1, y = xs2, group = factor(paste0(X0, t)), color = factor(regime)),
+    type = "norm", size = .25) + 
+  geom_smooth(
+    aes(x = xs1, y = xs2, group = factor(paste0(X0, t)), color = factor(regime)),
+    method='lm', formula = y ~ x + 1, size = .25, linetype = 2) + 
+  scale_color_manual(values = palette) +
+  xlab("Body mass [lg grams]") + 
+  ylab("Body mass [lg grams]") +
+  theme_gray() +
+  theme(legend.position = "none") +
+  coord_cartesian(xlim =  c(-1, 7), ylim = c(-2,4)) +
+  facet_grid(.~regime)
+
+plRegimes
+```
+
+```{r data-fig9-force-fields-H-matrix, eval=evalFig9}
+# 1 Ma
+timeSteps <- c(1, 10, 100, 1000)
+grid <- as.data.table(expand.grid(x = seq(xlim[1], xlim[2], length.out = 5), 
+            y = seq(ylim[1], ylim[2], length.out = 4)))
+grid[, p:=.I]
+
+listGridsMeansSamples <- sapply(timeSteps, function(timeStep)
+  lapply(seq_len(PCMNumRegimes(inferredModel)), function(i) {
+    dtModel <- copy(grid)
+    dtModel[, tstep:=timeStep]
+    regimeModel <- paste0(
+      'paste(', i, ', ". ", ',
+      shortModelNames[class(inferredModel[[as.character(i)]])[1]],
+      ')')
+    dtModel[, part:=regimeModel]
+    dtModel[, ri:=i]
+    
+    for(j in seq_len(nrow(dtModel))) {
+      mu <- PCMMeanAtTime(
+        timeStep, 
+        PCMApplyTransformation(inferredModel[[as.character(i)]]),
+        X0 = dtModel[j, c(x,y)])
+      Sigma <- PCMVarAtTime(
+        timeStep,
+        PCMApplyTransformation(inferredModel[[as.character(i)]]))
+      
+      dtModel[j, x2:=mu[1]]
+      dtModel[j, y2:=mu[2]]
+      
+      
+      xys <- rmvnorm(1000, mean=mu, sigma = Sigma)
+      
+      dtSamplej <- data.table(x=as.double(NA), y=as.double(NA), 
+                              p = j,
+                              tstep = timeStep,
+                              part = regimeModel, ri = i,
+                              x2 = as.double(NA), y2 = as.double(NA),
+                              xs = xys[, 1], ys = xys[, 2])
+      dtModel[j, xs:=as.double(NA)]
+      dtModel[j, ys:=as.double(NA)]
+      
+      dtModel <- rbindlist(list(dtModel, dtSamplej))
+    }
+    
+    dtModel
+}))
+
+dtGridsMeansSamples <- rbindlist(listGridsMeansSamples)
+regimesOrdered <- dtGridsMeansSamples[, list(part=unique(part)), keyby=ri][, part]
+```
+
+
+```{r fig9-1-force-fields-H-matrix, dev.args=list(colormodel="rgb"), dpi=600,  fig.width=9,fig.height=8, eval=evalFig9}
+ggplot(dtGridsMeansSamples[ri %in% c(1, 2, 3)]) + 
+  geom_segment(aes(x=x, y=y, xend=x2, yend=y2, color=as.character(ri))) +
+  geom_point(aes(x=x, y=y))+
+  geom_point(aes(x=x2, y=y2), color="red", size=1) +
+  stat_ellipse(aes(x=xs, y=ys, group=p, color=as.character(ri)), type="norm", alpha=0.5, na.rm=TRUE) +
+  scale_color_manual(values = palette) +
+  #scale_x_continuous(limits = xlim) + 
+  #scale_y_continuous(limits = ylim) + 
+  coord_fixed(xlim = xlim, ylim = ylim, ratio = 1) +
+  xlab("lg(body-mass [g])") +
+  ylab("lg(brain-mass [g])") +
+  theme_bw() + 
+  theme(legend.position = "none") +
+  facet_grid(factor(part, levels=regimesOrdered)~factor(tstep, levels=unique(sort(tstep)), labels=paste0("paste(", unique(sort(tstep)), ", ' Ma')")), labeller = label_parsed)
+
+```
+
+```{r fig9-force-fields-H-matrix, dev.args=list(colormodel="rgb"), dpi=600,  fig.width=8, fig.height=12, eval=evalFig9}
+pl1 <- ggplot(dtGridsMeansSamples[ri<=6]) + 
+  geom_segment(aes(x=x, y=y, xend=x2, yend=y2, color=as.character(ri))) +
+  geom_point(aes(x=x, y=y))+
+  geom_point(aes(x=x2, y=y2), color="red", size=1) +
+  stat_ellipse(aes(x=xs, y=ys, group=p, color=as.character(ri)), type="norm", alpha=0.5, na.rm=TRUE) +
+  scale_color_manual(values = palette) +
+  coord_fixed(xlim = xlim, ylim = ylim, ratio = 1) +
+  xlab("lg(body-mass [g])") +
+  ylab("lg(brain-mass [g])") +
+  theme_bw() + 
+  theme(legend.position = "none") +
+  facet_grid(factor(part, levels=regimesOrdered)~factor(tstep, levels=unique(sort(tstep)), labels=paste0("paste(", unique(sort(tstep)), ", ' Ma')")), labeller = label_parsed)
+
+pl2 <- ggplot(dtGridsMeansSamples[ri>6]) + 
+  geom_segment(aes(x=x, y=y, xend=x2, yend=y2, color=as.character(ri))) +
+  geom_point(aes(x=x, y=y), na.rm=TRUE)+
+  geom_point(aes(x=x2, y=y2), color="red", size=1, na.rm = TRUE) +
+  stat_ellipse(aes(x=xs, y=ys, group=p, color=as.character(ri)), type="norm", alpha=0.5, na.rm=TRUE) +
+  scale_color_manual(values = palette) +
+  coord_fixed(xlim = xlim, ylim = ylim, ratio = 1) +
+  xlab("lg(body-mass [g])") +
+  ylab("lg(brain-mass [g])") +
+  theme_bw() + 
+  theme(legend.position = "none") +
+  facet_grid(factor(part, levels=regimesOrdered)~factor(tstep, levels=unique(sort(tstep)), labels=paste0("paste(", unique(sort(tstep)), ", ' Ma')")), labeller = label_parsed)
+  
+#cowplot::plot_grid(pl1,pl2, nrow=1)
+pl1
+pl2
+```
+
+```{r fig-bootstrap-trees, fig.width=9, fig.height=11.2, eval = FALSE}
+tableBSFits <- fits_bootstrap_MGPM_A_F_best_clade_RR_HD[!is.na(logLik)]
+
+treeOriginal <- PCMTree(MGPMMammals::bestFitMappingsToDataWithoutSEs$treeOriginal)
+
+ids <- tableBSFits$Id
+
+plList <- lapply(ids, function(id) {
+  bsModel <- tableBSFits[Id==id]$model[[1L]]
+  bsLogLik <- round(tableBSFits[Id==id]$logLik[[1L]], 2)
+  bsAIC <- round(tableBSFits[Id==id]$score[[1L]], 2)
+  
+  aicStar <- round(valuesBootstrapBestFitToDataWithSEs[IdGlob == id]$score[1], 2)
+  llStar <- round(valuesBootstrapBestFitToDataWithSEs[IdGlob == id]$logLik[1], 2)
+  dfStar <- valuesBootstrapBestFitToDataWithSEs[IdGlob == id]$df[1]
+  
+  bsMapping <- attr(bsModel, "mapping")
+  bsTree <- PCMTreeSetPartition(
+    tree = treeOriginal,
+    nodes = tableBSFits[Id == id]$clusterNodesLabels[[1L]],
+    inplace = FALSE)
+  
+  attr(bsModel, "tree") <- bsTree
+  
+  p = PCMParamCount(bsModel, countRegimeChanges = TRUE, countModelTypes = TRUE)
+  
+  bsDtNodes <- PCMTreeDtNodes(bsTree)
+  bsDtNodes[, mapping:=bsMapping[regime]]
+  setkey(bsDtNodes, endNode)
+  
+  
+  selectedTips <- bsDtNodes[endNode <= PCMTreeNumTips(bsTree)
+    , list(node = endNode[floor(.N/2)]), by = regime]$node
+  
+  bsDtNodes[
+    list(selectedTips), modelTypeLetter:=paste0(" ", regime, ".", LETTERS[mapping], " ")]
+  
+  plTree <- PCMTreePlot(bsTree, layout="fan", open.angle=2, size=.25) 
+  
+  plTree <- plTree %<+% bsDtNodes[!is.na(modelTypeLetter), list(node = endNode, modelTypeLetter)]
+  
+  plTree <- plTree + geom_tiplab2(aes(label = modelTypeLetter), size = 2.4) +
+    ggtitle(
+      paste0(
+        "", id, ". AIC*=", aicStar, ", logLik*=", llStar, ", p*=", dfStar, "  \n",
+        "  AIC'=", bsAIC, ", logLik'=", bsLogLik, ", p'=", p))  +
+    theme(title = element_text(size = 6.2))
+  plTree
+})
+
+cowplot::plot_grid(plotlist = plList[1:20], nrow = 5, ncol = 4)
+cowplot::plot_grid(plotlist = plList[21:40], nrow = 5, ncol = 4)
+cowplot::plot_grid(plotlist = plList[41:length(plList)], nrow = 5, ncol = 4)
+```
+
+```{r fig-bootstrap-parameters, fig.width=6, fig.height=6, eval = TRUE}
+inferredModel <- PCMApplyTransformation(bestFitToDataWithSEs$modelOptim)
+inferredTree <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochs
+
+palette <- PCMColorPalette(
+  PCMTreeNumParts(inferredTree), as.character(PCMRegimes(inferredTree)))
+
+
+dtBSX0 <- as.data.table(
+  t(sapply(1:50, function(i) 
+    if(!is.null(fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])) {
+      as.vector(
+        PCMApplyTransformation(
+          fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])$X0[])
+    } else {
+      rep(NA_real_, 2)
+    }
+)))
+
+names(dtBSX0) = c("X0[1]", "X0[2]")
+
+dtBSForEachX0 <- rbindlist(lapply(seq_along(names(dtBSX0)), function(ni) {
+  dtForSingleParam <- dtBSX0[, ni, with=FALSE]
+  dtForSingleParam[, Parameter:=names(dtBSX0)[ni]]
+  setnames(dtForSingleParam, names(dtBSX0)[ni], "value")
+}))
+
+dtInferredForEachX0 <- data.table(
+  value = as.vector(inferredModel$X0[]),
+  Parameter = names(dtBSX0)
+)
+
+plBSX0 <- ggplot(dtBSForEachX0) +
+  stat_boxplot(aes(x = Parameter, y = value)) +
+  geom_point(
+    data = dtInferredForEachX0, 
+    mapping = aes(x = Parameter, y = value), color = palette[1], size = 3)+
+  theme_grey()
+
+
+dtBSH <- as.data.table(
+  t(sapply(1:50, function(i) 
+    if(!is.null(fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])) {
+      as.vector(
+        PCMApplyTransformation(
+          fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])$`1`$H[,,1L])
+    } else {
+      rep(NA_real_, 4)
+    }
+)))
+
+names(dtBSH) = c("H[11]", "H[21]", "H[12]", "H[22]")
+
+dtBSForEachH <- rbindlist(lapply(seq_along(names(dtBSH)), function(ni) {
+  dtForSingleParam <- dtBSH[, ni, with=FALSE]
+  dtForSingleParam[, Parameter:=names(dtBSH)[ni]]
+  setnames(dtForSingleParam, names(dtBSH)[ni], "value")
+}))
+
+dtInferredForEachH <- data.table(
+  value = as.vector(inferredModel$`1`$H[,,1]),
+  Parameter = names(dtBSH)
+)
+
+plBSH <- ggplot(dtBSForEachH) +
+  stat_boxplot(aes(x = Parameter, y = value)) +
+  geom_point(
+    data = dtInferredForEachH, 
+    mapping = aes(x = Parameter, y = value), color = palette[1], size = 3)+
+  theme_grey()
+
+
+dtBSTheta <- as.data.table(
+  t(sapply(1:50, function(i) 
+    if(!is.null(fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])) {
+      as.vector(
+        PCMApplyTransformation(
+          fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])$`1`$Theta[,1L])
+    } else {
+      rep(NA_real_, 2)
+    }
+)))
+
+names(dtBSTheta) = c("Theta[1]", "Theta[2]")
+
+dtBSForEachTheta <- rbindlist(lapply(seq_along(names(dtBSTheta)), function(ni) {
+  dtForSingleParam <- dtBSTheta[, ni, with=FALSE]
+  dtForSingleParam[, Parameter:=names(dtBSTheta)[ni]]
+  setnames(dtForSingleParam, names(dtBSTheta)[ni], "value")
+}))
+
+dtInferredForEachTheta <- data.table(
+  value = as.vector(inferredModel$`1`$Theta[,1]),
+  Parameter = names(dtBSTheta)
+)
+
+plBSTheta <- ggplot(dtBSForEachTheta) +
+  stat_boxplot(aes(x = Parameter, y = value)) +
+  geom_point(
+    data = dtInferredForEachTheta, 
+    mapping = aes(x = Parameter, y = value), color = palette[1], size = 3)+
+  theme_grey()
+
+
+
+
+
+dtBSSigma <- as.data.table(
+  t(sapply(1:50, function(i) 
+    if(!is.null(fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])) {
+      as.vector(
+        PCMApplyTransformation(
+          fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])$
+          `1`$Sigma[,,1L] %*% 
+        t(PCMApplyTransformation(
+          fits_bootstrap_MGPM_A_F_best_clade_RR_HD$model[[i]])$
+          `1`$Sigma[,,1L]))
+    } else {
+      rep(NA_real_, 4)
+    }
+)))
+
+names(dtBSSigma) = c("Sigma[11]", "Sigma[21]", "Sigma[12]", "Sigma[22]")
+
+dtBSForEachSigma <- rbindlist(lapply(seq_along(names(dtBSSigma)), function(ni) {
+  dtForSingleParam <- dtBSSigma[, ni, with=FALSE]
+  dtForSingleParam[, Parameter:=names(dtBSSigma)[ni]]
+  setnames(dtForSingleParam, names(dtBSSigma)[ni], "value")
+}))
+
+dtInferredForEachSigma <- data.table(
+  value = 
+    as.vector(inferredModel$`1`$Sigma[,,1] %*% t(inferredModel$`1`$Sigma[,,1])),
+  Parameter = names(dtBSSigma)
+)
+
+plBSSigma <- ggplot(dtBSForEachSigma) +
+  stat_boxplot(aes(x = Parameter, y = value)) +
+  geom_point(
+    data = dtInferredForEachSigma, 
+    mapping = 
+      aes(x = Parameter, y = value), 
+    color = palette[1], size = 3) +
+  theme_grey()
+
+cowplot::plot_grid(
+  plBSX0, plBSH, plBSTheta, plBSSigma, rel_widths = c(0.5, 1), 
+  labels = LETTERS[1:4])
+```
+
+```{r table-compare-models}
+
+load("Results/MGPM_A_F_best_clade_2_t2/FinalResult_MGPM_A_F_best_clade_2_2_.RData")
+
+tableFitsSingleRegime <- fitMappings$tableFits[
+  treeEDExpression == "E(tree,630)", 
+  list(
+    model = names(MGPMDefaultModelTypes())[match(mapping, MGPMDefaultModelTypes())],
+    q = "n.a.", R= 1, df = df, ll = logLik, AIC = score)][, .SD, keyby=model]
+
+
+# By mistake, we used 1e-7 instead of 1e-5 for the singularity check in the 
+# Surface OU and Scalar OU FITS. 
+# This setting makes it generally easier for these models to find regions of 
+# higher likelihood in the parameter space. Hence, it has been retained as is 
+# and the fit has not been repeated. 
+options(PCMBase.Threshold.EV = 1e-7)
+
+load("Results/SCALAROU_best_clade/FinalResult_SCALAROU_best_clade.RData")
+bestFitScalarOU <- RetrieveBestFitScore(fitMappings)
+
+tableBestFitScalarOUToDataWithSEs <- data.table(
+  model = "Scalar OU",
+  q = 20,
+  R = PCMNumRegimes(bestFitScalarOU$inferredModel),
+  p = PCMParamCount(bestFitScalarOU$inferredModel, TRUE, TRUE),
+  ll = logLik(bestFitScalarOU$inferredModel),
+  AIC = AIC(bestFitScalarOU$inferredModel))
+
+load("Results/SURFACEOU_best_clade/FinalResult_SURFACEOU_best_clade.RData")
+bestFitSurfaceOU <- RetrieveBestFitScore(fitMappings)
+
+tableBestFitSurfaceOUToDataWithSEs <- data.table(
+  model = "Surface OU",
+  q = 20,
+  R = PCMNumRegimes(bestFitSurfaceOU$inferredModel),
+  p = PCMParamCount(bestFitSurfaceOU$inferredModel, TRUE, TRUE),
+  ll = logLik(bestFitSurfaceOU$inferredModel),
+  AIC = AIC(bestFitSurfaceOU$inferredModel))
+
+
+options(PCMBase.Threshold.EV = 1e-7)
+
+tableBestFitMGPMToDataWithSEs <- data.table(
+  model = "MGPM (A-F)",
+  q = 20,
+  R = PCMNumRegimes(MGPMMammals::bestFitToDataWithSEs$modelOptim),
+  p = PCMParamCount(MGPMMammals::bestFitToDataWithSEs$modelOptim, countRegimeChanges = TRUE, TRUE),
+  ll = logLik(MGPMMammals::bestFitToDataWithSEs$modelOptim),
+  AIC = AIC(MGPMMammals::bestFitToDataWithSEs$modelOptim))
+
+xtable(
+  rbindlist(list(
+    tableFitsSingleRegime, 
+    tableBestFitSurfaceOUToDataWithSEs,
+    tableBestFitScalarOUToDataWithSEs,
+    tableBestFitMGPMToDataWithSEs)))
+
+
+```
+```{r print-inferred-model-params}
+PrintLatex <- function(x) {
+  UseMethod("PrintLatex", x)
+}
+
+PrintLatex.MatrixParameter <- function(x) {
+  xtab <- xtable(x[,,1L],align=rep("",ncol(x[,,1L])+1), digits = 3)
+  print(xtab, floating=FALSE, tabular.environment="bmatrix", digits = 4, 
+        hline.after=NULL, include.rownames=FALSE, include.colnames=FALSE)
+}
+
+PrintLatex.matrix <- function(x) {
+  xtab <- xtable(x,align=rep("",ncol(x)+1), digits = 3)
+  print(xtab, floating=FALSE, tabular.environment="bmatrix", digits = 5, 
+        hline.after=NULL, include.rownames=FALSE, include.colnames=FALSE)
+}
+
+modelTransformed <- PCMApplyTransformation(
+  MGPMMammals::bestFitToDataWithSEs$modelOptim)
+
+options(digits = 4)
+PrintLatex(modelTransformed$`1`$Sigma_x[,,1]%*%t(modelTransformed$`1`$Sigma_x[,,1]))
+```

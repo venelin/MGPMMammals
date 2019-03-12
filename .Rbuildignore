@@ -1,4 +1,5 @@
 ^data-raw/Results$
+^data-raw/Results_bootstrap$
 ^data-raw/.*\.pdf$
 ^data-raw/.*\.html$
 ^data-raw/.*\.xlsx$
