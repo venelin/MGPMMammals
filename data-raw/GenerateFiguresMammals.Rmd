@@ -731,7 +731,7 @@ pl <- pl +
 pl
 ```
 
-```{r fig3-MammalBackBone-Ribbons, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=5.24, fig.height=7.67, eval=FALSE}
+```{r fig3-MammalBackBone-Ribbons, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=5.24, fig.height=7.67, eval=TRUE}
 inferredModel <- bestFitToDataWithSEs$modelOptim
 inferredMapping <- attr(inferredModel, "mapping")
 
@@ -746,7 +746,6 @@ tableBSFits <- fits_bootstrap_MGPM_A_F_best_clade_RR_HD[!is.na(logLik)] # & logL
 dtBody <- ExtractBSDataForTraitValue(
   tableBSFits = tableBSFits,
   inferredModel = inferredModel,
-  inferredTree = inferredTreeHD,
   inferredBackboneTree = treeBackboneHD,
   epochs = epochsHD,
   traitIndex = 1L,
@@ -756,7 +755,6 @@ dtBody <- ExtractBSDataForTraitValue(
 dtBrain <- ExtractBSDataForTraitValue(
   tableBSFits = tableBSFits,
   inferredModel = inferredModel,
-  inferredTree = inferredTreeHD,
   inferredBackboneTree = treeBackboneHD,
   epochs = epochsHD,
   traitIndex = 2L,
@@ -766,7 +764,6 @@ dtBrain <- ExtractBSDataForTraitValue(
 dtBrainOnBody <- ExtractBSDataForTraitRegression(
   tableBSFits = tableBSFits,
   inferredModel = inferredModel,
-  inferredTree = inferredTreeHD,
   inferredBackboneTree = treeBackboneHD,
   epochs = epochsHD,
   traitIndexX = 1L,
@@ -1047,7 +1044,6 @@ tableBSFits <- fits_bootstrap_MGPM_A_F_best_clade_RR_HD[!is.na(logLik)] #  & log
 dtBSTprFprGlobal <- ExtractBSDataTprFprGlobal(
   tableBSFits = tableBSFits,
   inferredModel = inferredModel,
-  inferredTree = inferredTreeHD,
   inferredBackboneTree = treeBackboneHD,
   epochs = epochsHD)
 
@@ -1172,7 +1168,6 @@ plModelTypeFreqs <- ggplot(dtModelTypeFreqs) +
 dtTprWithinParts <- ExtractBSDataTprWithinParts(
   tableBSFits = tableBSFits,
   inferredModel = inferredModel,
-  inferredTree = inferredTreeHD,
   inferredBackboneTree = treeBackboneHD,
   epochs = epochsHD)
 

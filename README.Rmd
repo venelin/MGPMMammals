@@ -24,7 +24,7 @@ This package contains large data files and is not intended for release on CRAN. 
 
 * Clone the package repository from github using the command (type the following three commands in your terminal / shell):
 ```
-git clone https://github.com/venelin/PCMFit.git
+git clone https://github.com/venelin/MGPMMammals.git
 ```
 
 * Enable git large file system (LFS) in your working copy:

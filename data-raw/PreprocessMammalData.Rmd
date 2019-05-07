@@ -1078,4 +1078,20 @@ colnames(SEs) <- tree$tip.label
 usethis::use_data(SEs, overwrite = TRUE)
 ```
 
+# PCA transformation of the mammal data
+```{r, eval=TRUE}
+library(MGPMMammals)
+library(data.table)
+prcObject <- prcomp(
+  formula = ~lg_BodyMass+lg_BrainMass, 
+  data = as.data.table(t(MGPMMammals::values)))
+prcObject$rotation
+par(mfrow = c(1,2))
+plot(prcObject$x)
+
+plot(t(MGPMMammals::values) %*% prcObject$rotation)
+
+usethis::use_data(prcObject, overwrite = TRUE)
+```
+
 # References
