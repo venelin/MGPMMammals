@@ -1089,8 +1089,6 @@ prcObject$rotation
 par(mfrow = c(1,2))
 plot(prcObject$x)
 
-plot(t(MGPMMammals::values) %*% prcObject$rotation)
-
 usethis::use_data(prcObject, overwrite = TRUE)
 ```
 
