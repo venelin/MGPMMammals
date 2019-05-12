@@ -78,15 +78,19 @@ print(PCMOptions())
 XPRC <- t(prcObject$x)
 colnames(XPRC) <- colnames(MGPMMammals::values)
 
-# shift the data by the mean values of the real traits. This is needed in
-# order to use the same bounds for the model parameters, in particular theta and
-# X0.
-traitMeans <- rowMeans(MGPMMammals::values)
-XPRC <- apply(XPRC, 2, function(x) x + traitMeans)
-
 # We use the same SEs.
 SEPRC <- MGPMMammals::SEs
 rownames(SEPRC) <- rownames(XPRC)
+
+listPCMOptions <- c(
+  PCMOptions(),
+  list(
+    MGPMMammals.LowerLimit.Theta1 = min(XPRC[1,]),
+    MGPMMammals.LowerLimit.Theta2 = min(XPRC[2,]),
+    MGPMMammals.UpperLimit.Theta1 = max(XPRC[1,]),
+    MGPMMammals.UpperLimit.Theta2 = max(XPRC[2,]),
+    MGPMMammals.LowerLimit.Sigma_x12 = -1.0)
+)
 
 fitMappings <- PCMFitMixed(
 
@@ -127,6 +131,8 @@ fitMappings <- PCMFitMixed(
 
   maxNumRoundRobins = 5,
   maxNumPartitionsInRoundRobins = 8,
+
+  listPCMOptions = listPCMOptions,
 
   doParallel = TRUE,
 
