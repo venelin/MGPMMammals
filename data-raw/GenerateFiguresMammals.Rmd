@@ -12,10 +12,10 @@ library(PCMFit)
 library(MGPMMammals)
 library(ggtree)
 library(ggplot2)
-library(ggimage)
+#library(ggimage)
 library(cowplot)
 library(data.table)
-library(fpc)
+#library(fpc)
 library(knitr)
 library(rmarkdown)
 library(lmtest)
@@ -30,6 +30,7 @@ opts_chunk$set(dev='pdf',
                  pointsize=10,
                  colormodel='rgb'
                ),
+               
                dpi=600, bg='white')
 
 options(PCMBase.Value.NA = -1e20)
@@ -40,7 +41,7 @@ options(PCMBase.Threshold.EV = 1e-5)
 options(PCMBase.Skip.Singular = FALSE)
 options(PCMBase.Threshold.Skip.Singular = 1e-4)
 
-evalFig1 <- TRUE
+evalFig1 <- FALSE
 scaleFigModParams <- 1.0
 evalFig2 <- FALSE
 evalFig2.1 <- FALSE
@@ -116,6 +117,11 @@ bestFitToDataWithSEs$epochsHD <- epochsHD
 
 # 
 usethis::use_data(bestFitToDataWithSEs, overwrite = TRUE)
+
+# load result file from inferring MGPM on the mammal principal component data.
+load("Results/MGPM_A_F_best_clade_2_2_PRCValues/FinalResult_MGPM_A_F_best_clade_2_2_PRCValues.RData")
+bestFitToPRCDataWithSEs <- RetrieveBestFitScore(fitMappings)
+usethis::use_data(bestFitToPRCDataWithSEs, overwrite = TRUE)
 ```
 
 ```{r, include=FALSE, eval=TRUE}
@@ -532,7 +538,7 @@ cowplot::plot_grid(
   nrow=3, ncol = 3)
 ```
 
-```{r fig3-phylopic-annotation-tips, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=7.58, fig.height=8.24, eval=TRUE}
+```{r fig3-phylopic-annotation-tips, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=7.58, fig.height=8.24, eval=FALSE}
 treeWithAnimals <- treeBackbone
 
 dtTipRegimes <- data.table(
@@ -810,6 +816,10 @@ dtBSLinePlotsForParts <- dtBrainBodyCombined[
 
 palette <- PCMColorPalette(
   PCMTreeNumParts(treeBackboneHD), as.character(PCMRegimes(treeBackboneHD)))
+# manually swap the colors for the regimes 10 and 11
+col11 <- palette['11']
+palette['11'] <- palette['10']
+palette['10'] <- col11
 
 maxTime <- max(PCMTreeNodeTimes(inferredTreeHD))
 
@@ -1115,6 +1125,10 @@ dtBSLinePlotsForParts <- dtModelTypeFreqs[
 
 palette <- PCMColorPalette(
   PCMTreeNumParts(treeBackboneHD), as.character(PCMRegimes(treeBackboneHD)))
+# manually swap the colors for the regimes 10 and 11
+col11 <- palette['11']
+palette['11'] <- palette['10']
+palette['10'] <- col11
 
 plModelTypeFreqs <- ggplot(dtModelTypeFreqs) +
   geom_rect(
@@ -1196,6 +1210,10 @@ dtBSLinePlotsForParts <- dtTprWithinParts[
 
 palette <- PCMColorPalette(
   PCMTreeNumParts(treeBackboneHD), as.character(PCMRegimes(treeBackboneHD)))
+# manually swap the colors for the regimes 10 and 11
+col11 <- palette['11']
+palette['11'] <- palette['10']
+palette['10'] <- col11
 
 maxTime <- max(PCMTreeNodeTimes(inferredTreeHD))
 
@@ -1252,7 +1270,7 @@ cowplot::plot_grid(plNumParts, plTprFpr, plTprWithinParts, plModelTypeFreqs, nro
 ```
 
 
-```{r fig4-fan-tree, fig.width=2.5, fig.height=2.5}
+```{r fig4-fan-tree, fig.width=2.5, fig.height=2.5, eval=FALSE}
 inferredModel <- bestFitToDataWithSEs$modelOptim
 inferredMapping <- attr(inferredModel, "mapping")
 inferredTree <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochs
@@ -1385,6 +1403,93 @@ plEllipsesSimul <- ggplot(dtTraitsSimul[regime %in% c(1, 3, 10)]) +
   coord_cartesian(xlim = c(0, 8), ylim = c(-1, 4))
 
 cowplot::plot_grid(plTree, plTraitsReal, plEllipsesReal, plEllipsesSimul, scale = c(1.08, 1, 1, 1), labels = LETTERS[1:4], label_size = 10)
+```
+
+```{r fig-fan-tree-and-data-prc, fig.width=3.43, fig.height=1.72, eval=TRUE}
+inferredModel <- bestFitToPRCDataWithSEs$inferredModel
+inferredMapping <- attr(inferredModel, "mapping")
+inferredTree <- attr(bestFitToPRCDataWithSEs$inferredModel, "tree")
+
+dtShifts <- data.table(node = PCMTreeGetPartition(inferredTree))
+dtShifts[, shiftPart:=PCMTreeGetPartsForNodes(inferredTree, node)]
+dtShifts[, shiftRegime:=PCMTreeGetPartRegimes(inferredTree)[shiftPart]]
+
+dtNodes <- PCMTreeDtNodes(inferredTree)
+dtNodes[, mapping:=inferredMapping[regime]]
+setkey(dtNodes, endNode)
+  
+selectedTips <- dtNodes[
+  endNode <= PCMTreeNumTips(inferredTree), 
+  list(node = endNode[floor(.N/1.6)]), by = regime]$node
+  
+dtNodes[
+  list(selectedTips), modelTypeLetter:=paste0(" ", regime, ".", LETTERS[mapping], " ")]
+
+palettePRC <- PCMColorPalette(
+  PCMTreeNumParts(inferredTree), as.character(PCMRegimes(inferredTree)))
+  
+plTree <- PCMTreePlot(
+  inferredTree, layout = 'fan', open.angle = 4, size= .25, palette = palettePRC)
+
+plTree <- plTree %<+% dtShifts %<+% 
+  dtNodes[!is.na(modelTypeLetter), list(node = endNode, modelTypeLetter)]
+
+plTree <- plTree + 
+  geom_treescale(x = 0, y = 631, width = 166.2, offset = -18, fontsize = 1.6, linesize = 0.25) +
+  #geom_nodepoint(
+  #  aes(color = factor(shiftRegime)), shape = 21, fill="white", size=3, na.rm = TRUE) +
+  #geom_text(aes(label=as.character(shiftRegime), color = factor(shiftRegime)), size=1.6) +
+  geom_tiplab2(aes(label = modelTypeLetter), size = 2.5) +
+  scale_shape_manual(values=21) #+
+  #theme_transparent()
+
+dtTraitsReal <- data.table(
+  tip = seq_len(PCMTreeNumTips(inferredTree)), 
+  
+  regime = PCMTreeGetPartRegimes(inferredTree)[
+    PCMTreeGetPartsForNodes(
+      inferredTree, seq_len(PCMTreeNumTips(inferredTree)))],
+  x = t(MGPMMammals::prcObject$x)[1, seq_len(PCMTreeNumTips(inferredTree))],
+  y = t(MGPMMammals::prcObject$x)[2, seq_len(PCMTreeNumTips(inferredTree))]
+)
+
+plTraitsReal <- ggplot(dtTraitsReal[sample(seq_len(.N))]) +
+  geom_point(aes(x, y, color = factor(regime)), alpha = 0.4, size = 0.15) +
+  scale_color_manual(values = palette) +
+  #scale_shape_manual(values = structure(rep(seq_len(6), 2), names = as.character(seq_len(12)))) +
+  theme_grey() +
+  theme(legend.position = "none", axis.text = element_text(size = 6), axis.title = element_text(size = 7)) +
+  xlab("Principal component 1") +
+  ylab("Principal component 2") +
+  coord_cartesian(xlim = c(-6, 3), ylim = c(-1, 1))
+
+plEllipsesReal <- ggplot(dtTraitsReal[regime %in% c(1, 3, 10)]) +
+  stat_ellipse(aes(x, y, color = factor(regime)), alpha = 0.4, size = 0.4) +
+  geom_smooth(aes(x, y, color = factor(regime)), method = "lm", size = 0.4, se = FALSE) +
+  scale_color_manual(values = palette) +
+#  scale_shape_manual(values = structure(rep(seq_len(6), 2), names = as.character(seq_len(12)))) +
+  theme_grey() +
+  theme(legend.position = "none", axis.text = element_text(size = 6), axis.title = element_text(size = 7)) +
+  xlab("Body-mass [lg grams]") +
+  ylab("Brain-mass [lg grams]") +
+  coord_cartesian(xlim = c(-6, 3), ylim = c(-1, 1))
+
+cowplot::plot_grid(plTree, plTraitsReal, scale = c(1.08, 1), labels = LETTERS[1:2], label_size = 10)
+```
+
+```{r calculateClusterMGPMPRCvsMGPMSTAR}
+treeMGPMPRC <- attr(MGPMMammals::bestFitToPRCDataWithSEs$inferredModel, "tree")
+treeMGPMSTAR <- attr(MGPMMammals::bestFitToDataWithSEs$modelOptim, "tree")
+  
+matMGPMPRC <- PCMTreeMatrixNodesInSameRegime(treeMGPMPRC)
+mode(matMGPMPRC) <- "double"
+
+matMGPMSTAR <- PCMTreeMatrixNodesInSameRegime(treeMGPMSTAR)
+mode(matMGPMSTAR) <- "double"
+
+perf_Cluster = c(
+  tpr = TruePositiveRate(matMGPMPRC, matMGPMSTAR),
+  fpr = FalsePositiveRate(matMGPMPRC, matMGPMSTAR))
 ```
 
 ```{r fig5-model-trajectory-plot, fig.width=3.43, fig.height=3.43, eval = FALSE}
@@ -1615,7 +1720,7 @@ cowplot::plot_grid(plotlist = plList[21:40], nrow = 5, ncol = 4)
 cowplot::plot_grid(plotlist = plList[41:length(plList)], nrow = 5, ncol = 4)
 ```
 
-```{r fig-bootstrap-parameters, fig.width=6, fig.height=6, eval = TRUE}
+```{r fig-bootstrap-parameters, fig.width=6, fig.height=6, eval = FALSE}
 inferredModel <- PCMApplyTransformation(bestFitToDataWithSEs$modelOptim)
 inferredTree <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochs
 
@@ -1765,7 +1870,7 @@ cowplot::plot_grid(
   labels = LETTERS[1:4])
 ```
 
-```{r table-compare-models}
+```{r table-compare-models, eval=FALSE}
 
 load("Results/MGPM_A_F_best_clade_2_t2/FinalResult_MGPM_A_F_best_clade_2_2_.RData")
 
@@ -1825,7 +1930,7 @@ xtable(
 
 
 ```
-```{r print-inferred-model-params}
+```{r print-inferred-model-params, eval=FALSE}
 PrintLatex <- function(x) {
   UseMethod("PrintLatex", x)
 }
