@@ -1,6 +1,6 @@
 # This script can be run locally or on a cluster using a command like:
 #
-# bsub -M 400000 -n 400 -W 23:59 -R ib sh R --vanilla --slave -f ../../DetectShifts_MGPM_A_F_best_clade_2_PRCValues.R
+# bsub -M 400000 -n 400 -W 23:59 -R ib sh R --vanilla --slave -f ../../DetectShifts_MGPM_A_F_best_clade_2_PPCAValues.R
 #
 library(ape)
 library(PCMBase)
@@ -8,7 +8,6 @@ library(PCMBaseCpp)
 library(PCMFit)
 library(data.table)
 library(MGPMMammals)
-library(abind)
 
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -18,7 +17,7 @@ if(length(args) > 0) {
   id <- 1
 }
 
-prefixFiles = paste0("MGPM_A_F_best_clade_2_2_PRCValues")
+prefixFiles = paste0("MGPM_A_F_best_clade_2_2_PPCAValues")
 
 if(!exists("cluster") || is.null(cluster)) {
   if(require(doMPI)) {
@@ -74,43 +73,21 @@ if(file.exists(fileCurrentResults)) {
 options(PCMBase.Value.NA = -1e20)
 options(PCMBase.Lmr.mode = 11)
 
-print(PCMOptions())
-
-XPRC <- t(prcObject$x)
-colnames(XPRC) <- colnames(MGPMMammals::values)
-
-
-SEPRC <- do.call(
-  abind,
-  c(lapply(seq_len(PCMTreeNumTips(MGPMMammals::tree)), function(i) {
-    cat(i, ":\n")
-    VE <- diag(MGPMMammals::SEs[,i]^2)
-    if(VE[1,1] == 0) {
-      VE[1,1] <- 0.001
-    }
-    if(VE[2,2] == 0) {
-      VE[2,2] <- .Machine$double.eps
-    }
-    print(VE)
-    cat(det(prcObject$rotation %*% VE %*% prcObject$rotation), "\n")
-    unname(chol(prcObject$rotation %*% VE %*% prcObject$rotation))
-  }), list(along = 3)))
-
-#rownames(SEPRC) <- rownames(XPRC)
-
 listPCMOptions <- c(
   PCMOptions(),
   list(
-    MGPMMammals.LowerLimit.Theta1 = min(XPRC[1,]),
-    MGPMMammals.LowerLimit.Theta2 = min(XPRC[2,]),
-    MGPMMammals.UpperLimit.Theta1 = max(XPRC[1,]),
-    MGPMMammals.UpperLimit.Theta2 = max(XPRC[2,]),
+    MGPMMammals.LowerLimit.Theta1 = min(valuesPPCA[1,]),
+    MGPMMammals.LowerLimit.Theta2 = min(valuesPPCA[2,]),
+    MGPMMammals.UpperLimit.Theta1 = max(valuesPPCA[1,]),
+    MGPMMammals.UpperLimit.Theta2 = max(valuesPPCA[2,]),
     MGPMMammals.LowerLimit.Sigma_x12 = -1.0)
 )
 
+print(PCMOptions())
+
 fitMappings <- PCMFitMixed(
 
-  X = XPRC, tree = MGPMMammals::tree, SE = SEPRC,
+  X = valuesPPCA, tree = MGPMMammals::tree, SE = SEsPPCA,
 
   metaIFun = PCMInfoCpp, positiveValueGuard = 5000,
 

@@ -59,11 +59,21 @@ options(PCMBase.Value.NA = -1e20)
 options(PCMBase.Lmr.mode = 11)
 options(PCMBase.Threshold.EV = 1e-7)
 
+listPCMOptions <- c(
+  PCMOptions(),
+  list(
+    MGPMMammals.LowerLimit.Theta1 = min(valuesPPCA[1,]),
+    MGPMMammals.LowerLimit.Theta2 = min(valuesPPCA[2,]),
+    MGPMMammals.UpperLimit.Theta1 = max(valuesPPCA[1,]),
+    MGPMMammals.UpperLimit.Theta2 = max(valuesPPCA[2,]),
+    MGPMMammals.LowerLimit.Sigma_x12 = -1.0)
+)
+
 print(PCMOptions())
 
 
 fitMappings <- PCMFitMixed(
-  X = MGPMMammals::valuesPPCA, tree = MGPMMammals::tree, SE = MGPMMammals::SEsPPCA,
+  X = valuesPPCA, tree = MGPMMammals::tree, SE = SEsPPCA,
 
   modelTypes = MGPMSurfaceOUType(),
   subModels = c(),
@@ -94,13 +104,15 @@ fitMappings <- PCMFitMixed(
     numJitterAllRegimeFits = 1000,
     sdJitterAllRegimeFits = 0.05),
 
+  listPCMOptions = listPCMOptions,
+
   doParallel = TRUE,
 
   prefixFiles = prefixFiles,
   saveTempWorkerResults = TRUE,
   printFitVectorsToConsole = FALSE,
   verbose = TRUE,
-  debug = FALSE)
+  debug = TRUE)
 
 save(fitMappings, file = paste0("FinalResult_", prefixFiles, ".RData"))
 
