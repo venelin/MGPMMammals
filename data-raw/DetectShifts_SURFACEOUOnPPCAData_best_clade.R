@@ -7,7 +7,7 @@ library(PCMBase)
 library(PCMBaseCpp)
 library(PCMFit)
 library(data.table)
-library(MGPMSimulations)
+library(MGPMMammals)
 
 prefixFiles = "SURFACEOUOnPPCAData_best_clade"
 
