@@ -1,5 +1,5 @@
-mkdir -p Results/SURFACEOUOnPPCAData_best_clade_2
-cd Results/SURFACEOUOnPPCAData_best_clade_2
+mkdir -p Results/SURFACEOUOnPPCAData_best_clade
+cd Results/SURFACEOUOnPPCAData_best_clade
 if [ -f "FinalResult_SURFACEOUOnPPCAData_best_clade.RData" ]
 then
 rm MPI*.log
