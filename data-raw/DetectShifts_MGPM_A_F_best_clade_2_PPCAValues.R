@@ -122,8 +122,8 @@ fitMappings <- PCMFitMixed(
     numJitterAllRegimeFits = 1000L,
     sdJitterAllRegimeFits = 0.05),
 
-  maxNumRoundRobins = 5,
-  maxNumPartitionsInRoundRobins = 8,
+  maxNumRoundRobins = 3,
+  maxNumPartitionsInRoundRobins = 20,
 
   listPCMOptions = listPCMOptions,
 
