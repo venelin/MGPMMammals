@@ -81,7 +81,7 @@ colnames(XPRC) <- colnames(MGPMMammals::values)
 
 
 SEPRC <- do.call(
-  abind,
+  abind::abind,
   c(lapply(seq_len(PCMTreeNumTips(MGPMMammals::tree)), function(i) {
     cat(i, ":\n")
     VE <- diag(MGPMMammals::SEs[,i]^2)
@@ -93,8 +93,16 @@ SEPRC <- do.call(
     }
     print(VE)
     cat(det(prcObject$rotation %*% VE %*% prcObject$rotation), "\n")
-    unname(chol(prcObject$rotation %*% VE %*% prcObject$rotation))
+    unname(chol(t(prcObject$rotation) %*% VE %*% prcObject$rotation))
   }), list(along = 3)))
+
+fitBMBsPCA <- fitBMB
+fitBMBsPCA$X0[] <- NA_real_
+fitBMBsPCA$`1`$Sigma_x[,,1] <- chol(t(prcObject$rotation) %*% fitBMBsPCA$`1`$Sigma_x[,,1] %*% t(fitBMBsPCA$`1`$Sigma_x[,,1]) %*% prcObject$rotation)
+
+PCMLik(MGPMMammals::values, MGPMMammals::tree, fitBMB)
+PCMLik(XPRC, MGPMMammals::tree, fitBMBsPCA)
+
 
 #rownames(SEPRC) <- rownames(XPRC)
 
