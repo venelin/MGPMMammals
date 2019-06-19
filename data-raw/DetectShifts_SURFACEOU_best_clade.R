@@ -66,7 +66,7 @@ fitMappings <- PCMFitMixed(
   X = MGPMMammals::values, tree = MGPMMammals::tree, SE = MGPMMammals::SEs,
 
   modelTypes = MGPMSurfaceOUType(),
-
+  subModels = c(),
   argsMixedGaussian = Args_MixedGaussian_MGPMSurfaceOUType(),
 
   metaIFun = PCMInfoCpp, positiveValueGuard = 10000,

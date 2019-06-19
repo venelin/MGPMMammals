@@ -56,7 +56,7 @@ evalFig9 <- FALSE
 # load("Results/FinalResult_MixedGaussian_MammalData_id_1_t6_.RData")
 # The fitMappings from the above file was saved as a data-object in the MGPMMammals
 # package:
-fitMappings <- MGPMMammals::bestFitMappingsToDataWithoutSEs
+fitMappings <- MGPMMammals::fitMappingsToDataWithoutSEs
 
 # Set internal node.label containing family and order names at the internal
 # nodes
@@ -115,17 +115,98 @@ bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochsHD <- inferredTre
 bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochsHD <- treeBackboneHD
 bestFitToDataWithSEs$epochsHD <- epochsHD
 
-# 
-usethis::use_data(bestFitToDataWithSEs, overwrite = TRUE)
+## 
+# usethis::use_data(bestFitToDataWithSEs, overwrite = TRUE)
 
-# load result file from inferring MGPM on the mammal principal component data.
-load("Results/MGPM_A_F_best_clade_2_2_PRCValues/FinalResult_MGPM_A_F_best_clade_2_2_PRCValues.RData")
-bestFitToPRCDataWithSEs <- RetrieveBestFitScore(fitMappings)
-usethis::use_data(bestFitToPRCDataWithSEs, overwrite = TRUE)
+
+## save raw results containing the so called fitMappings objects as data-objects
+
+# # 1. MGPM (A-F) fit to data with SEs. We use this for extracting the best global
+# # model fits in Table 1 (main text), but the best MGPM fit was less good than
+# # the one found by an ML fit on the best shift-point configuration found on the
+# # tree and data without including the SEs.
+# load("Results/MGPM_A_F_best_clade_2_t2/FinalResult_MGPM_A_F_best_clade_2_2_.RData")
+# fitMappings_MGPM_A_F_best_clade_2_DataWithSEs <- fitMappings
+
+# # In the previous version used in Revision 1, there was not automated check
+# # whether a sub-model for a clade has a better likelihood than its parent model
+# # on the same clade. This feature has been implemented during Revision 2.
+# # The call to the function UpdateCladeFitsUsingSubModels below ensures that
+# # every parent model is at least as good as its submodel on each clade.
+# # For the models A-F, the hierarchy is defined as follows:
+# # subModels = c(B = "A", C = "A", D = "B", E = "D", F = "E"),
+# #
+# cladeFits <- fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$tableFits[
+#   sapply(treeEDExpression, startsWith, 'E(tree,')]
+# 
+# XMammals <- MGPMMammals::values
+# SEMammals <- MGPMMammals::SEs
+# colnames(XMammals) <- colnames(SEMammals) <- as.character(seq_len(ncol(XMammals)))
+# 
+# PCMFit:::UpdateCladeFitsUsingSubModels(
+#   cladeFits = cladeFits,
+#   modelTypes = 
+#     fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$arguments$modelTypes,
+#   subModels = c(B = "A", C = "A", D = "B", E = "D", F = "E"),
+#   argsMixedGaussian = 
+#     fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$arguments$argsMixedGaussian,
+#   metaIFun = PCMBaseCpp::PCMInfoCpp,
+#   scoreFun = fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$arguments$scoreFun,
+#   X = XMammals, 
+#   tree = fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$tree,
+#   SE = SEMammals,
+#   verbose = TRUE)
+# 
+# fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$tableFits <- 
+#   PCMFit:::UpdateTableFits(
+#     fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$tableFits,
+#     cladeFits)
+
+# usethis::use_data(fitMappings_MGPM_A_F_best_clade_2_DataWithSEs, overwrite = TRUE)
+
+# # 2. SCALAROU to data with SEs
+# load("Results/SCALAROU_best_clade/FinalResult_SCALAROU_best_clade.RData")
+# fitMappings_SCALAROU_best_clade_DataWithSEs <- fitMappings
+# usethis::use_data(fitMappings_SCALAROU_best_clade_DataWithSEs, overwrite = TRUE)
+# 
+# # 3. SURFACEOU to data with SEs
+# load("Results/SURFACEOU_best_clade/FinalResult_SURFACEOU_best_clade.RData")
+# fitMappings_SURFACEOU_best_clade_DataWithSEs <- fitMappings
+# usethis::use_data(fitMappings_SURFACEOU_best_clade_DataWithSEs)
+# 
+# # 4. MGPM (A-F) to PPCA-rotated Data With (PPCA-rotated) SEs
+# load("Results/MGPM_A_F_best_clade_2_2_PPCAValues_t4/FinalResult_MGPM_A_F_best_clade_2_2_PPCAValues.RData")
+# fitMappings_MGPM_A_F_best_clade_2_pPCADataWithSEs <- fitMappings
+# # usethis::use_data(fitMappings_MGPM_A_F_best_clade_2_pPCADataWithSEs)
+# 
+# # 5. MGPM (A-F) to PCA-rotated Data With (PCA-rotated) SEs
+# load("Results/MGPM_A_F_best_clade_2_2_PRCValues/FinalResult_MGPM_A_F_best_clade_2_2_PRCValues.RData")
+# fitMappings_MGPM_A_F_best_clade_2_PRCDataWithSEs <- fitMappings
+# # usethis::use_data(fitMappings_MGPM_A_F_best_clade_2_PRCDataWithSEs)
+# 
+# # 6. SURFACEOU to PPCA-rotated Data With (PPCA-rotated) SEs
+# load("Results/SURFACEOUOnPPCAData_best_clade/FinalResult_SURFACEOUOnPPCAData_best_clade.RData")
+# fitMappings_SURFACEOU_best_clade_pPCADataWithSEs <- fitMappings
+# # usethis::use_data(fitMappings_SURFACEOU_best_clade_pPCADataWithSEs, overwrite = TRUE)
+# 
+# # 7. SCALAROU to PPCA-rotated Data With (PPCA-rotated) SEs
+# load("Results/SCALAROUOnPPCAData_best_clade/FinalResult_SCALAROUOnPPCAData_best_clade.RData")
+# fitMappings_SCALAROU_best_clade_pPCADataWithSEs <- fitMappings
+# # usethis::use_data(fitMappings_SCALAROU_best_clade_pPCADataWithSEs, overwrite = TRUE)
+
+# # 8. MGPM (B) to data with SEs
+# load("Results/MGPM_B_best_clade_2/FinalResult_MGPM_B_best_clade_2.RData")
+# fitMappings_MGPM_B_best_clade_2_DataWithSEs <- fitMappings
+# usethis::use_data(fitMappings_MGPM_B_best_clade_2_DataWithSEs, overwrite = TRUE)
+
+# # 9. MGPM (B) to data PPCA rotated data with PPCA rotated SEs
+# load("Results/MGPM_B_best_clade_2_PPCAValues/FinalResult_MGPM_B_best_clade_2_PPCAValues.RData")
+# fitMappings_MGPM_B_best_clade_2_pPCADataWithSEs <- fitMappings
+# usethis::use_data(fitMappings_MGPM_B_best_clade_2_pPCADataWithSEs, overwrite = TRUE)
 ```
 
 ```{r, include=FALSE, eval=TRUE}
-fitMappings <- MGPMMammals::bestFitMappingsToDataWithoutSEs
+fitMappings <- MGPMMammals::fitMappingsToDataWithoutSEs
 inferredModel <- bestFitToDataWithSEs$modelOptim
 inferredTree <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpochs
 treeBackbone <- bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochs
@@ -1338,8 +1419,8 @@ plTree <- plTree +
   #  aes(color = factor(shiftRegime)), shape = 21, fill="white", size=3, na.rm = TRUE) +
   #geom_text(aes(label=as.character(shiftRegime), color = factor(shiftRegime)), size=1.6) +
   geom_tiplab2(aes(label = modelTypeLetter), size = 2.5) +
-  scale_shape_manual(values=21) +
-  theme_transparent()
+  scale_shape_manual(values=21) #+
+  #theme_transparent()
 
 dtTraitsReal <- data.table(
   tip = seq_len(PCMTreeNumTips(inferredTree)), 
@@ -1405,91 +1486,134 @@ plEllipsesSimul <- ggplot(dtTraitsSimul[regime %in% c(1, 3, 10)]) +
 cowplot::plot_grid(plTree, plTraitsReal, plEllipsesReal, plEllipsesSimul, scale = c(1.08, 1, 1, 1), labels = LETTERS[1:4], label_size = 10)
 ```
 
-```{r fig-fan-tree-and-data-prc, fig.width=3.43, fig.height=1.72, eval=TRUE}
-inferredModel <- bestFitToPRCDataWithSEs$inferredModel
-inferredMapping <- attr(inferredModel, "mapping")
-inferredTree <- attr(bestFitToPRCDataWithSEs$inferredModel, "tree")
-
-dtShifts <- data.table(node = PCMTreeGetPartition(inferredTree))
-dtShifts[, shiftPart:=PCMTreeGetPartsForNodes(inferredTree, node)]
-dtShifts[, shiftRegime:=PCMTreeGetPartRegimes(inferredTree)[shiftPart]]
-
-dtNodes <- PCMTreeDtNodes(inferredTree)
-dtNodes[, mapping:=inferredMapping[regime]]
-setkey(dtNodes, endNode)
+```{r function-plot-fan-tree-and-data}
+plotFanTreeAndData <- function(
+  fitMappings = NULL, 
+  inferredModel = RetrieveBestFitScore(fitMappings)$inferredModel, 
+  palette = NULL,
+  labels = c(x = "x", y = "y")) {
   
-selectedTips <- dtNodes[
-  endNode <= PCMTreeNumTips(inferredTree), 
-  list(node = endNode[floor(.N/1.6)]), by = regime]$node
+  inferredMapping <- attr(inferredModel, "mapping")
+  inferredTree <- attr(inferredModel, "tree")
+  values <- attr(inferredModel, "X")
+  modelTypes <- attr(inferredModel, "modelTypes")
   
-dtNodes[
-  list(selectedTips), modelTypeLetter:=paste0(" ", regime, ".", LETTERS[mapping], " ")]
-
-palettePRC <- PCMColorPalette(
-  PCMTreeNumParts(inferredTree), as.character(PCMRegimes(inferredTree)))
+  if(is.null(palette)) {
+    palette <- PCMColorPalette(
+      PCMTreeNumParts(inferredTree), as.character(PCMRegimes(inferredTree)))
+    
+  }
   
-plTree <- PCMTreePlot(
-  inferredTree, layout = 'fan', open.angle = 4, size= .25, palette = palettePRC)
-
-plTree <- plTree %<+% dtShifts %<+% 
-  dtNodes[!is.na(modelTypeLetter), list(node = endNode, modelTypeLetter)]
-
-plTree <- plTree + 
-  geom_treescale(x = 0, y = 631, width = 166.2, offset = -18, fontsize = 1.6, linesize = 0.25) +
-  #geom_nodepoint(
-  #  aes(color = factor(shiftRegime)), shape = 21, fill="white", size=3, na.rm = TRUE) +
-  #geom_text(aes(label=as.character(shiftRegime), color = factor(shiftRegime)), size=1.6) +
-  geom_tiplab2(aes(label = modelTypeLetter), size = 2.5) +
-  scale_shape_manual(values=21) #+
-  #theme_transparent()
-
-dtTraitsReal <- data.table(
-  tip = seq_len(PCMTreeNumTips(inferredTree)), 
+  dtShifts <- data.table(node = PCMTreeGetPartition(inferredTree))
+  dtShifts[, shiftPart:=PCMTreeGetPartsForNodes(inferredTree, node)]
+  dtShifts[, shiftRegime:=PCMTreeGetPartRegimes(inferredTree)[shiftPart]]
   
-  regime = PCMTreeGetPartRegimes(inferredTree)[
-    PCMTreeGetPartsForNodes(
-      inferredTree, seq_len(PCMTreeNumTips(inferredTree)))],
-  x = t(MGPMMammals::prcObject$x)[1, seq_len(PCMTreeNumTips(inferredTree))],
-  y = t(MGPMMammals::prcObject$x)[2, seq_len(PCMTreeNumTips(inferredTree))]
-)
+  dtNodes <- PCMTreeDtNodes(inferredTree)
+  dtNodes[, mapping:=inferredMapping[regime]]
+  setkey(dtNodes, endNode)
+  
+  selectedTips <- dtNodes[
+    endNode <= PCMTreeNumTips(inferredTree), 
+    list(node = endNode[floor(.N/1.6)]), by = regime]$node
+  
+  dtNodes[
+    list(selectedTips), 
+    modelTypeLetter:=paste0(
+      " ", regime, 
+      if(length(modelTypes) > 1) {
+        paste0(".", LETTERS[mapping])
+      } else {
+        ""
+      }, " ")]
+  
+  plTree <- PCMTreePlot(
+    PCMTree(inferredTree), layout = 'fan', open.angle = 4, size= .25, palette = palette)
+  
+  plTree <- plTree %<+% dtShifts %<+% 
+    dtNodes[!is.na(modelTypeLetter), list(node = endNode, modelTypeLetter)]
+  
+  plTree <- plTree + 
+    geom_treescale(x = 0, y = 631, width = 166.2, offset = -18, fontsize = 1.6, linesize = 0.25) +
+    #geom_nodepoint(
+    #  aes(color = factor(shiftRegime)), shape = 21, fill="white", size=3, na.rm = TRUE) +
+    #geom_text(aes(label=as.character(shiftRegime), color = factor(shiftRegime)), size=1.6) +
+    geom_tiplab2(aes(label = modelTypeLetter), size = 2.5) 
+  
+  dtTraits <- data.table(
+    tip = seq_len(PCMTreeNumTips(inferredTree)), 
+    
+    regime = PCMTreeGetPartRegimes(inferredTree)[
+      PCMTreeGetPartsForNodes(
+        inferredTree, seq_len(PCMTreeNumTips(inferredTree)))],
+    x = values[1, seq_len(PCMTreeNumTips(inferredTree))],
+    y = values[2, seq_len(PCMTreeNumTips(inferredTree))]
+  )
+  
+  plTraits <- ggplot(dtTraits[sample(seq_len(.N))]) +
+    geom_point(aes(x, y, color = factor(regime)), alpha = 0.4, size = 0.15) +
+    scale_color_manual(values = palette) +
+    #scale_shape_manual(values = structure(rep(seq_len(6), 2), names = as.character(seq_len(12)))) +
+    theme_grey() +
+    theme(legend.position = "none", axis.text = element_text(size = 6), axis.title = element_text(size = 7)) +
+    xlab(labels['x']) + ylab(labels['y'])
 
-plTraitsReal <- ggplot(dtTraitsReal[sample(seq_len(.N))]) +
-  geom_point(aes(x, y, color = factor(regime)), alpha = 0.4, size = 0.15) +
-  scale_color_manual(values = palette) +
-  #scale_shape_manual(values = structure(rep(seq_len(6), 2), names = as.character(seq_len(12)))) +
-  theme_grey() +
-  theme(legend.position = "none", axis.text = element_text(size = 6), axis.title = element_text(size = 7)) +
-  xlab("Principal component 1") +
-  ylab("Principal component 2") +
-  coord_cartesian(xlim = c(-6, 3), ylim = c(-1, 1))
-
-plEllipsesReal <- ggplot(dtTraitsReal[regime %in% c(1, 3, 10)]) +
-  stat_ellipse(aes(x, y, color = factor(regime)), alpha = 0.4, size = 0.4) +
-  geom_smooth(aes(x, y, color = factor(regime)), method = "lm", size = 0.4, se = FALSE) +
-  scale_color_manual(values = palette) +
-#  scale_shape_manual(values = structure(rep(seq_len(6), 2), names = as.character(seq_len(12)))) +
-  theme_grey() +
-  theme(legend.position = "none", axis.text = element_text(size = 6), axis.title = element_text(size = 7)) +
-  xlab("Body-mass [lg grams]") +
-  ylab("Brain-mass [lg grams]") +
-  coord_cartesian(xlim = c(-6, 3), ylim = c(-1, 1))
-
-cowplot::plot_grid(plTree, plTraitsReal, scale = c(1.08, 1), labels = LETTERS[1:2], label_size = 10)
+  list(plTree= plTree, plTraits = plTraits)
+}
 ```
 
-```{r calculateClusterMGPMPRCvsMGPMSTAR}
-treeMGPMPRC <- attr(MGPMMammals::bestFitToPRCDataWithSEs$inferredModel, "tree")
-treeMGPMSTAR <- attr(MGPMMammals::bestFitToDataWithSEs$modelOptim, "tree")
-  
-matMGPMPRC <- PCMTreeMatrixNodesInSameRegime(treeMGPMPRC)
-mode(matMGPMPRC) <- "double"
 
-matMGPMSTAR <- PCMTreeMatrixNodesInSameRegime(treeMGPMSTAR)
-mode(matMGPMSTAR) <- "double"
+```{r fig-fan-tree-and-data-ppca, fig.width=3.43*2, fig.height=1.72*4, eval=TRUE}
+plListSURFACEOUOriginal <- 
+  plotFanTreeAndData(
+    fitMappings_SURFACEOU_best_clade_DataWithSEs,
+    labels = c(x = "Body mass [lg(g)]", y = "Brain mass [lg(g)]"))
 
-perf_Cluster = c(
-  tpr = TruePositiveRate(matMGPMPRC, matMGPMSTAR),
-  fpr = FalsePositiveRate(matMGPMPRC, matMGPMSTAR))
+plListSCALAROUOriginal <- 
+  plotFanTreeAndData(
+    fitMappings_SCALAROU_best_clade_DataWithSEs,
+    labels = c(x = "Body mass [lg(g)]", y = "Brain mass [lg(g)]"))
+
+plListMGPMBOriginal <- 
+  plotFanTreeAndData(
+    fitMappings_MGPM_B_best_clade_2_DataWithSEs, 
+    labels = c(x = "Body mass [lg(g)]", y = "Brain mass [lg(g)]"))
+
+plListMGPMOriginal <- 
+  plotFanTreeAndData(
+    inferredModel = bestFitToDataWithSEs$modelOptim,
+    labels = c(x = "Body mass [lg(g)]", y = "Brain mass [lg(g)]"))
+
+plListSURFACEOUpPCA <- plotFanTreeAndData(
+  fitMappings_SURFACEOU_best_clade_pPCADataWithSEs,
+  labels = c(x = "pPC 1", y = "pPC 2"))
+
+plListSCALAROUpPCA <- plotFanTreeAndData(
+  fitMappings_SCALAROU_best_clade_pPCADataWithSEs,
+  labels = c(x = "pPC 1", y = "pPC 2"))
+
+plListMGPMBpPCA <- 
+  plotFanTreeAndData(
+    fitMappings_MGPM_B_best_clade_2_pPCADataWithSEs, 
+    labels = c(x = "pPC 1", y = "pPC 2"))
+
+plListMGPMpPCA <- plotFanTreeAndData(
+    fitMappings_MGPM_A_F_best_clade_2_pPCADataWithSEs,
+    labels = c(x = "pPC 1", y = "pPC 2"))
+
+
+cowplot::plot_grid(
+  plot_grid(
+    plotlist = c(plListSURFACEOUOriginal, plListSURFACEOUpPCA), 
+    scale = c(1.08, 1), nrow = 1), 
+  plot_grid(plotlist = c(plListSCALAROUOriginal, plListSCALAROUpPCA), 
+    scale = c(1.08, 1), nrow = 1),
+  plot_grid(plotlist = c(plListMGPMBOriginal, plListMGPMBpPCA), 
+    scale = c(1.08, 1), nrow = 1),
+  plot_grid(plotlist = c(plListMGPMOriginal, plListMGPMpPCA), 
+    scale = c(1.08, 1), nrow = 1),
+  labels = LETTERS[seq_len(4)], 
+  label_size = 10,
+  nrow = 4)
 ```
 
 ```{r fig5-model-trajectory-plot, fig.width=3.43, fig.height=3.43, eval = FALSE}
@@ -1668,7 +1792,7 @@ pl2
 ```{r fig-bootstrap-trees, fig.width=9, fig.height=11.2, eval = FALSE}
 tableBSFits <- fits_bootstrap_MGPM_A_F_best_clade_RR_HD[!is.na(logLik)]
 
-treeOriginal <- PCMTree(MGPMMammals::bestFitMappingsToDataWithoutSEs$treeOriginal)
+treeOriginal <- PCMTree(MGPMMammals::fitMappingsToDataWithoutSEs$treeOriginal)
 
 ids <- tableBSFits$Id
 
@@ -1871,15 +1995,36 @@ cowplot::plot_grid(
 ```
 
 ```{r table-compare-models, eval=FALSE}
+globalNames <- c(
+  A = 'Global $BM_{A}$',
+  B = 'Global $BM_{B}$',
+  C = 'Global $OU_{C}$',
+  D = 'Global $OU_{D}$',
+  E = 'Global $OU_{E}$',
+  F = 'Global $OU_{F}$')
 
-load("Results/MGPM_A_F_best_clade_2_t2/FinalResult_MGPM_A_F_best_clade_2_2_.RData")
-
-tableFitsSingleRegime <- fitMappings$tableFits[
+tableFitsSingleRegime <-
+  fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$tableFits[
   treeEDExpression == "E(tree,630)", 
   list(
     model = names(MGPMDefaultModelTypes())[match(mapping, MGPMDefaultModelTypes())],
-    q = "n.a.", R= 1, df = df, ll = logLik, AIC = score)][, .SD, keyby=model]
+    `$q$` = "n.a.", 
+    `$R$` = 1, 
+    `$p$` = df - 1,  # we need to correct df and AIC, because single-model fit
+    `$\\ell\\ell$` = logLik, 
+    AIC = score - 2)][, .SD, keyby=model]
 
+tableFitsSingleRegime[, model:=globalNames[model]]
+
+
+bestFitMGPMB <- RetrieveBestFitScore(fitMappings_MGPM_B_best_clade_2_DataWithSEs)
+tableBestFitMGPMBToDataWithSEs <- data.table(
+  model = "$BM_{B}$ with shifts",
+  `$q$` = 20,
+  `$R$` = PCMNumRegimes(bestFitMGPMB$inferredModel),
+  `$p$` = PCMParamCount(bestFitMGPMB$inferredModel, TRUE, TRUE),
+  `$\\ell\\ell$` = logLik(bestFitMGPMB$inferredModel),
+  AIC = AIC(bestFitMGPMB$inferredModel))
 
 # By mistake, we used 1e-7 instead of 1e-5 for the singularity check in the 
 # Surface OU and Scalar OU FITS. 
@@ -1888,68 +2033,324 @@ tableFitsSingleRegime <- fitMappings$tableFits[
 # and the fit has not been repeated. 
 options(PCMBase.Threshold.EV = 1e-7)
 
-load("Results/SCALAROU_best_clade/FinalResult_SCALAROU_best_clade.RData")
-bestFitScalarOU <- RetrieveBestFitScore(fitMappings)
+bestFitScalarOU <- 
+  RetrieveBestFitScore(fitMappings_SCALAROU_best_clade_DataWithSEs)
 
 tableBestFitScalarOUToDataWithSEs <- data.table(
-  model = "Scalar OU",
-  q = 20,
-  R = PCMNumRegimes(bestFitScalarOU$inferredModel),
-  p = PCMParamCount(bestFitScalarOU$inferredModel, TRUE, TRUE),
-  ll = logLik(bestFitScalarOU$inferredModel),
+  model = "SCALAR OU",
+  `$q$` = 20,
+  `$R$` = PCMNumRegimes(bestFitScalarOU$inferredModel),
+  `$p$` = PCMParamCount(bestFitScalarOU$inferredModel, TRUE, TRUE),
+  `$\\ell\\ell$` = logLik(bestFitScalarOU$inferredModel),
   AIC = AIC(bestFitScalarOU$inferredModel))
 
-load("Results/SURFACEOU_best_clade/FinalResult_SURFACEOU_best_clade.RData")
-bestFitSurfaceOU <- RetrieveBestFitScore(fitMappings)
+
+bestFitSurfaceOU <- RetrieveBestFitScore(fitMappings_SURFACEOU_best_clade_DataWithSEs)
 
 tableBestFitSurfaceOUToDataWithSEs <- data.table(
-  model = "Surface OU",
-  q = 20,
-  R = PCMNumRegimes(bestFitSurfaceOU$inferredModel),
-  p = PCMParamCount(bestFitSurfaceOU$inferredModel, TRUE, TRUE),
-  ll = logLik(bestFitSurfaceOU$inferredModel),
+  model = "SURFACE OU",
+  `$q$` = 20,
+  `$R$` = PCMNumRegimes(bestFitSurfaceOU$inferredModel),
+  `$p$` = PCMParamCount(bestFitSurfaceOU$inferredModel, TRUE, TRUE),
+  `$\\ell\\ell$` = logLik(bestFitSurfaceOU$inferredModel),
   AIC = AIC(bestFitSurfaceOU$inferredModel))
 
 
 options(PCMBase.Threshold.EV = 1e-7)
 
 tableBestFitMGPMToDataWithSEs <- data.table(
-  model = "MGPM (A-F)",
-  q = 20,
-  R = PCMNumRegimes(MGPMMammals::bestFitToDataWithSEs$modelOptim),
-  p = PCMParamCount(MGPMMammals::bestFitToDataWithSEs$modelOptim, countRegimeChanges = TRUE, TRUE),
-  ll = logLik(MGPMMammals::bestFitToDataWithSEs$modelOptim),
+  model = "MGPM* (A-F)",
+  `$q$` = 20,
+  `$R$` = PCMNumRegimes(MGPMMammals::bestFitToDataWithSEs$modelOptim),
+  `$p$` = PCMParamCount(MGPMMammals::bestFitToDataWithSEs$modelOptim, countRegimeChanges = TRUE, TRUE),
+  `$\\ell\\ell$` = logLik(MGPMMammals::bestFitToDataWithSEs$modelOptim),
   AIC = AIC(MGPMMammals::bestFitToDataWithSEs$modelOptim))
 
-xtable(
-  rbindlist(list(
+
+reportTable <- rbindlist(list(
     tableFitsSingleRegime, 
     tableBestFitSurfaceOUToDataWithSEs,
     tableBestFitScalarOUToDataWithSEs,
-    tableBestFitMGPMToDataWithSEs)))
+    tableBestFitMGPMBToDataWithSEs,
+    tableBestFitMGPMToDataWithSEs), use.names = TRUE)
 
-
+bestAIC <- reportTable[, min(AIC)]
+reportTable[, `$\\Delta$AIC`:=AIC-bestAIC]
+print(xtable(reportTable, digits=2), 
+      sanitize.text.function = identity,
+      sanitize.colnames.function = identity, 
+      include.rownames = FALSE)
 ```
+
+```{r table-compare-models-pPCAData, eval=FALSE}
+globalNames <- c(
+  A = 'Global $BM_{A}$',
+  B = 'Global $BM_{B}$',
+  C = 'Global $OU_{C}$',
+  D = 'Global $OU_{D}$',
+  E = 'Global $OU_{E}$',
+  F = 'Global $OU_{F}$')
+
+tableFitsSingleRegime <-
+  fitMappings_MGPM_A_F_best_clade_2_pPCADataWithSEs$tableFits[
+  treeEDExpression == "E(tree,630)", 
+  list(
+    model = names(MGPMDefaultModelTypes())[match(mapping, MGPMDefaultModelTypes())],
+    `$q$` = "n.a.", 
+    `$R$` = 1, 
+    `$p$` = df - 1, # we need to correct df and score because single model fit.
+    `$\\ell\\ell$` = logLik, 
+    AIC = score - 2)][, .SD, keyby=model]
+
+tableFitsSingleRegime[, model:=globalNames[model]]
+
+bestFitMGPMB <- RetrieveBestFitScore(fitMappings_MGPM_B_best_clade_2_pPCADataWithSEs)
+tableBestFitMGPMB <- data.table(
+  model = "$BM_B$ with shifts",
+  `$q$` = 20,
+  `$R$` = PCMNumRegimes(bestFitMGPMB$inferredModel),
+  `$p$` = PCMParamCount(bestFitMGPMB$inferredModel, TRUE, TRUE),
+  `$\\ell\\ell$` = logLik(bestFitMGPMB$inferredModel),
+  AIC = AIC(bestFitMGPMB$inferredModel))
+
+# By mistake, we used 1e-7 instead of 1e-5 for the singularity check in the 
+# Surface OU and Scalar OU FITS. 
+# This setting makes it generally easier for these models to find regions of 
+# higher likelihood in the parameter space. Hence, it has been retained as is 
+# and the fit has not been repeated. 
+options(PCMBase.Threshold.EV = 1e-7)
+
+bestFitScalarOU <-
+  RetrieveBestFitScore(fitMappings_SCALAROU_best_clade_pPCADataWithSEs)
+
+tableBestFitScalarOU <- data.table(
+  model = "SCALAR OU",
+  `$q$` = 20,
+  `$R$` = PCMNumRegimes(bestFitScalarOU$inferredModel),
+  `$p$` = PCMParamCount(bestFitScalarOU$inferredModel, TRUE, TRUE),
+  `$\\ell\\ell$` = logLik(bestFitScalarOU$inferredModel),
+  AIC = AIC(bestFitScalarOU$inferredModel))
+
+
+bestFitSurfaceOU <- 
+  RetrieveBestFitScore(fitMappings_SURFACEOU_best_clade_pPCADataWithSEs)
+
+tableBestFitSurfaceOU <- data.table(
+  model = "SURFACE OU",
+  `$q$` = 20,
+  `$R$` = PCMNumRegimes(bestFitSurfaceOU$inferredModel),
+  `$p$` = PCMParamCount(bestFitSurfaceOU$inferredModel, TRUE, TRUE),
+  `$\\ell\\ell$` = logLik(bestFitSurfaceOU$inferredModel),
+  AIC = AIC(bestFitSurfaceOU$inferredModel))
+
+
+options(PCMBase.Threshold.EV = 1e-7)
+
+bestFitMGPM <- 
+  RetrieveBestFitScore(fitMappings_MGPM_A_F_best_clade_2_pPCADataWithSEs)
+
+tableBestFitMGPM <- data.table(
+  model = "MGPM* (A-F)",
+  `$q$` = 20,
+  `$R$` = PCMNumRegimes(bestFitMGPM$inferredModel),
+  `$p$` = PCMParamCount(bestFitMGPM$inferredModel, countRegimeChanges = TRUE, TRUE),
+  `$\\ell\\ell$` = logLik(bestFitMGPM$inferredModel),
+  AIC = AIC(bestFitMGPM$inferredModel))
+
+
+reportTable <- rbindlist(list(
+    tableFitsSingleRegime, 
+    tableBestFitSurfaceOU,
+    tableBestFitScalarOU,
+    tableBestFitMGPMB,
+    tableBestFitMGPM), use.names = TRUE)
+
+bestAIC <- reportTable[, min(AIC)]
+reportTable[, `$\\Delta$AIC`:=AIC-bestAIC]
+print(xtable(reportTable, digits=2),
+      sanitize.text.function = identity,
+      sanitize.colnames.function = identity, 
+      include.rownames = FALSE)
+```
+
 ```{r print-inferred-model-params, eval=FALSE}
-PrintLatex <- function(x) {
-  UseMethod("PrintLatex", x)
+tableFitsSingleRegime <-
+  fitMappings_MGPM_A_F_best_clade_2_DataWithSEs$tableFits[
+  treeEDExpression == "E(tree,630)"]
+
+tableFitsSingleRegime <- RetrieveFittedModelsFromFitVectors(
+  fitMappings_MGPM_A_F_best_clade_2_DataWithSEs,
+  tableFitsSingleRegime)
+
+tableFitsSingleRegime <- tableFitsSingleRegime[, 
+  list(
+    modelType = 
+      names(MGPMDefaultModelTypes())[match(mapping, MGPMDefaultModelTypes())],
+    fittedModel, 
+    AIC = score)][, .SD, keyby=modelType]
+
+options(xtable.table.placement = "",
+        xtable.caption.placement = "top",
+        digits = 4)
+
+makeCaption <- function(model) {
+  paste0(
+    '\\textbf{Inferred parameters of model ', model, 
+    ' to body- and brain-mass data from 629 mammal species.} ',
+    'Schur and upper triangular forms of the parameters ',
+    '$\\mathbf{H}$ (OU models only), ',
+    '$\\mathbf{\\Sigma}$ are ',
+    'denoted by $H_{S}$ and $\\mathbf{\\Sigma}_{u}$, respectively. ',
+    'The regime column denotes the scope of the parameters with ',
+    ':global: denoting the global scope, i.e. parameter values inherited by ',
+    'all regimes, and integer numbers denoting each of the model regimes. ',
+    'The type column denotes the model type associated with each regime. ',
+    'See also Table 1 in the main text for the log-likelihood and the ',
+    'AIC scores of the model.')
+  
+}
+for(i in seq_len(nrow(tableFitsSingleRegime))) {
+  processType <- if(tableFitsSingleRegime$modelType[[i]] %in% c('A','B')) {
+    "BM"
+  } else {
+    "OU"
+  }
+
+  print(PCMTable(tableFitsSingleRegime$fittedModel[[i]]), 
+        xtable = TRUE, 
+        argsXtable = list(
+          caption = 
+            makeCaption(paste0(
+            'Global $', processType, '_{', tableFitsSingleRegime$modelType[[i]], '}$')),
+          label = paste0(
+            'table:ParametersModel:',
+            tableFitsSingleRegime$modelType[[i]])))
+  cat("\\FloatBarrier\n\n")
 }
 
-PrintLatex.MatrixParameter <- function(x) {
-  xtab <- xtable(x[,,1L],align=rep("",ncol(x[,,1L])+1), digits = 3)
-  print(xtab, floating=FALSE, tabular.environment="bmatrix", digits = 4, 
-        hline.after=NULL, include.rownames=FALSE, include.colnames=FALSE)
+bestModelSURFACEOU <- RetrieveBestFitScore(
+  fitMappings_SURFACEOU_best_clade_DataWithSEs)$inferredModel
+
+print(PCMTable(bestModelSURFACEOU), 
+        xtable = TRUE, 
+        argsXtable = list(
+          caption = makeCaption('SURFACE OU'),
+          label = 'table:ParametersModel:SURFACEOU'))
+cat("\\FloatBarrier\n\n")
+
+bestModelScalarOU <- RetrieveBestFitScore(
+  fitMappings_SCALAROU_best_clade_DataWithSEs)$inferredModel
+
+print(PCMTable(bestModelScalarOU), 
+      xtable = TRUE, 
+      argsXtable = list(
+        caption = makeCaption('SCALAR OU'),
+        label = 'table:ParametersModel:SCALAROU'))
+cat("\\FloatBarrier\n\n")
+
+bestModelBWithShifts <- RetrieveBestFitScore(
+  fitMappings_MGPM_B_best_clade_2_DataWithSEs)$inferredModel
+print(PCMTable(bestModelBWithShifts), 
+      xtable = TRUE, 
+      argsXtable = list(
+        caption = makeCaption('$BM_B$ with shifts'),
+        label = 'table:ParametersModel:MGPMB'))
+cat("\\FloatBarrier\n\n")
+
+print(PCMTable(bestFitToDataWithSEs$modelOptim), 
+      xtable = TRUE, 
+      argsXtable = list(
+        caption = makeCaption('MGPM*, i.e. the best MGPM (A-F) fit '),
+        label = 'table:ParametersModel:MGPMStar'))
+cat("\\FloatBarrier\n\n")
+```
+
+```{r print-inferred-model-params-pPCA, eval=FALSE}
+tableFitsSingleRegime <-
+  fitMappings_MGPM_A_F_best_clade_2_pPCADataWithSEs$tableFits[
+  treeEDExpression == "E(tree,630)"]
+
+tableFitsSingleRegime <- RetrieveFittedModelsFromFitVectors(
+  fitMappings_MGPM_A_F_best_clade_2_pPCADataWithSEs,
+  tableFitsSingleRegime)
+
+tableFitsSingleRegime <- tableFitsSingleRegime[, 
+  list(
+    modelType = 
+      names(MGPMDefaultModelTypes())[match(mapping, MGPMDefaultModelTypes())],
+    fittedModel, 
+    AIC = score)][, .SD, keyby=modelType]
+
+options(xtable.table.placement = "",
+        xtable.caption.placement = "top",
+        digits = 4)
+
+makeCaption <- function(model) {
+  paste0(
+    '\\textbf{Inferred parameters of model ', model, 
+    ' to pPCA-rotated body- and brain-mass data from 629 mammal species.} ',
+    'See legend for SI Appendix, table \\ref{table:ParametersModel:A}.')
+  
+}
+for(i in seq_len(nrow(tableFitsSingleRegime))) {
+  processType <- if(tableFitsSingleRegime$modelType[[i]] %in% c('A','B')) {
+    "BM"
+  } else {
+    "OU"
+  }
+
+  print(PCMTable(tableFitsSingleRegime$fittedModel[[i]]), 
+        xtable = TRUE, 
+        argsXtable = list(
+          caption = 
+            makeCaption(paste0(
+            'Global $', processType, '_{', tableFitsSingleRegime$modelType[[i]], '}$')),
+          label = paste0(
+            'table:ParametersModel:',
+            tableFitsSingleRegime$modelType[[i]],
+            ':pPCAData')))
+  cat("\\FloatBarrier\n\n")
 }
 
-PrintLatex.matrix <- function(x) {
-  xtab <- xtable(x,align=rep("",ncol(x)+1), digits = 3)
-  print(xtab, floating=FALSE, tabular.environment="bmatrix", digits = 5, 
-        hline.after=NULL, include.rownames=FALSE, include.colnames=FALSE)
-}
+bestModelSURFACEOU <- RetrieveBestFitScore(
+  fitMappings_SURFACEOU_best_clade_pPCADataWithSEs)$inferredModel
 
-modelTransformed <- PCMApplyTransformation(
-  MGPMMammals::bestFitToDataWithSEs$modelOptim)
+print(PCMTable(bestModelSURFACEOU), 
+        xtable = TRUE, 
+        argsXtable = list(
+          caption = makeCaption('SURFACE OU'),
+          label = 'table:ParametersModel:SURFACEOU:pPCAData'))
+cat("\\FloatBarrier\n\n")
 
-options(digits = 4)
-PrintLatex(modelTransformed$`1`$Sigma_x[,,1]%*%t(modelTransformed$`1`$Sigma_x[,,1]))
+bestModelScalarOU <- RetrieveBestFitScore(
+  fitMappings_SCALAROU_best_clade_pPCADataWithSEs)$inferredModel
+
+print(PCMTable(bestModelScalarOU), 
+      xtable = TRUE, 
+      argsXtable = list(
+        caption = makeCaption('SCALAR OU'),
+        label = 'table:ParametersModel:SCALAROU:pPCAData'))
+cat("\\FloatBarrier\n\n")
+
+bestModelBWithShifts <- RetrieveBestFitScore(
+  fitMappings_MGPM_B_best_clade_2_pPCADataWithSEs)$inferredModel
+print(PCMTable(bestModelBWithShifts), 
+      xtable = TRUE, 
+      argsXtable = list(
+        caption = makeCaption('$BM_B$ with shifts'),
+        label = 'table:ParametersModel:MGPMB:pPCAData'))
+cat("\\FloatBarrier\n\n")
+
+bestModelMGPM <- RetrieveBestFitScore(
+  fitMappings_MGPM_A_F_best_clade_2_pPCADataWithSEs)$inferredModel
+
+pcmTable <- PCMTable(bestModelMGPM)
+setcolorder(pcmTable, neworder = c(1, 2, 3, 6, 7, 8, 4, 5))
+print(pcmTable, 
+      xtable = TRUE, 
+      argsXtable = list(
+        caption = makeCaption('MGPM (A-F)'),
+        label = 'table:ParametersModel:MGPMStar:pPCAData'))
+cat("\\FloatBarrier\n\n")
+
 ```

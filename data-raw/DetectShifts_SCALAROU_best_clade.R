@@ -66,7 +66,7 @@ fitMappings <- PCMFitMixed(
   X = MGPMMammals::values, tree = MGPMMammals::tree, SE = MGPMMammals::SEs,
 
   modelTypes = MGPMScalarOUType(),
-
+  subModels = c(),
   argsMixedGaussian = Args_MixedGaussian_MGPMScalarOUType(),
 
   metaIFun = PCMInfoCpp, positiveValueGuard = 10000,
@@ -93,6 +93,17 @@ fitMappings <- PCMFitMixed(
     sdJitterRootRegimeFit = 0.05,
     numJitterAllRegimeFits = 1000,
     sdJitterAllRegimeFits = 0.05),
+  argsConfigOptim3 = DefaultArgsConfigOptim(
+    numCallsOptim = 4L,
+    numRunifInitVecParams = 1000L,
+    numGuessInitVecParams = 10000L,
+    numJitterRootRegimeFit = 1000L,
+    sdJitterRootRegimeFit = 0.05,
+    numJitterAllRegimeFits = 1000L,
+    sdJitterAllRegimeFits = 0.05),
+
+  maxNumRoundRobins = 5,
+  maxNumPartitionsInRoundRobins = 45,
 
   doParallel = TRUE,
 

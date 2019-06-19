@@ -103,6 +103,17 @@ fitMappings <- PCMFitMixed(
     sdJitterRootRegimeFit = 0.05,
     numJitterAllRegimeFits = 1000,
     sdJitterAllRegimeFits = 0.05),
+  argsConfigOptim3 = DefaultArgsConfigOptim(
+    numCallsOptim = 4L,
+    numRunifInitVecParams = 1000L,
+    numGuessInitVecParams = 10000L,
+    numJitterRootRegimeFit = 1000L,
+    sdJitterRootRegimeFit = 0.05,
+    numJitterAllRegimeFits = 1000L,
+    sdJitterAllRegimeFits = 0.05),
+
+  maxNumRoundRobins = 5,
+  maxNumPartitionsInRoundRobins = 45,
 
   listPCMOptions = listPCMOptions,
 
