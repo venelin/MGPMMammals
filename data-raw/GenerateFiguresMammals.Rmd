@@ -3,19 +3,17 @@ title: "GeneratedFigures"
 author: "Venelin Mitov"
 date: "6 June 2018"
 output: pdf_document
-keep_md: true
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
 library(PCMBase)
 library(PCMFit)
 library(MGPMMammals)
 library(ggtree)
 library(ggplot2)
-#library(ggimage)
+library(ggimage)
 library(cowplot)
 library(data.table)
-#library(fpc)
 library(knitr)
 library(rmarkdown)
 library(lmtest)
@@ -23,7 +21,6 @@ library(xtable)
 library(mvtnorm)
 
 opts_chunk$set(dev='pdf', 
-               #results="hide",
                warning=FALSE,
                dev.args=list(
                  family="ArialMT", 
@@ -41,7 +38,7 @@ options(PCMBase.Threshold.EV = 1e-5)
 options(PCMBase.Skip.Singular = FALSE)
 options(PCMBase.Threshold.Skip.Singular = 1e-4)
 
-evalFig1 <- FALSE
+evalFig1 <- TRUE
 scaleFigModParams <- 1.0
 evalFig2 <- FALSE
 evalFig2.1 <- FALSE
@@ -265,6 +262,7 @@ roundDigits <- 3
 ```
 
 ```{r fig1-MammalBackBone-calculate-means-variances-at-epochs, include=FALSE, eval=(evalFig1)}
+print(evalFig1)
 mI <- PCMInfo(
   X = NULL, tree = treeBackbone, model = inferredModel#, 
   #SE = MGPMMammals::SEs[, treeBackbone$tip.label]
@@ -496,16 +494,7 @@ pl
 
 ```{r fig1-MammalBackBone-modelParameters, dev.args=list(colormodel="rgb"), dpi=600, fig.width=44*scaleFigModParams, fig.height=54*scaleFigModParams, eval=evalFig1}
 
-pl <- PCMTreePlot(treeBackbone, size= 10*scaleFigModParams, palette = palette) #+ geom_nodelab(size = 2, angle = 90)
-
-# insets scatter-plots of the tips belonging to each part
-#pl <- inset(pl, scatterPlotsTips, width=width*1.25, height = height*1.25, hjust = hjust - 1.4*width, vjust = 1.5*vjust)
-
-# insets ellipse-plots at epochs
-#for(insets in ellipsePlots) {
-#  if(length(insets) > 0)
-#    pl <- inset(pl, insets, width=width*1.25, height = height*1.25, hjust = hjust, vjust = 1.5*vjust)
-#}
+pl <- PCMTreePlot(treeBackbone, size= 10*scaleFigModParams, palette = palette) 
 
 hjustModelParamPlots <- hjust + 2 + c(-18, rep(-30, length(modelParamPlots) - 1))
 vjustModelParamPlots <- rep(1 * vjust, length(modelParamPlots))
@@ -612,6 +601,7 @@ cowplot::plot_grid(
                     function(p) p + theme(plot.title = element_text(size=12))),
   nrow=2, ncol = 3)
 ```
+
 ```{r fig2-1-SearchHistoryMammalTree, fig.width=10.1, fig.height=11, eval=evalFig2}
 cowplot::plot_grid(
   plotlist = lapply(plList[7:14],
@@ -619,7 +609,7 @@ cowplot::plot_grid(
   nrow=3, ncol = 3)
 ```
 
-```{r fig3-phylopic-annotation-tips, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=7.58, fig.height=8.24, eval=FALSE}
+```{r fig3-phylopic-annotation-tips, dev.args=list(colormodel="rgb"), dpi=1200, fig.width=7.58, fig.height=8.24, eval=TRUE}
 treeWithAnimals <- treeBackbone
 
 dtTipRegimes <- data.table(
@@ -693,8 +683,8 @@ dtPhylopic <- rbindlist(list(
     id = "81930c02-5f26-43f7-9c19-e9831e780e53", size = 512, license = "PDD 1.0", 
     scaleSize = .05, hjust = -8, vjust = 0, angle = 0),
   data.table(
-    itemNo = 1, regime = 7, species = "Hystricognathi", by = "Zimices", 
-    id = "8d4497e7-a1b4-49e8-9e02-23db5f9aa37c", size = 512, license = "CCASAU 3.0", 
+    itemNo = 1, regime = 7, species = "Hystricognathi", by = "uncredited", 
+    id = "4c614ade-8710-400b-8045-ea1c9be4e7f2", size = 512, license = "PDM 1.0", 
     scaleSize = .05, hjust = -8, vjust = 0, angle = 0),
   data.table(
     itemNo = 1, regime = 11, species = "Muridae", by = "Daniel Jaron", 
@@ -790,29 +780,29 @@ dtPhylopic[
 
 pl <- pl %<+% dtPhylopic
 
-pl <- pl + 
-  geom_image(
+pl <- pl +
+  ggimage::geom_image(
     mapping = aes(
-      x = x + 45 + (itemNo-1)*18 + hjust, y = y + vjust, image = url, 
+      x = x + 45 + (itemNo-1)*18 + hjust, y = y + vjust, image = url,
       size = I(scaleSize)))
 
 scaleFigModParams <- 0.1
 pl <- pl +
   geom_segment(aes(x = 0, y = 0 + offsetAxis, xend = 166.2, yend = 0 + offsetAxis), size = 2*scaleFigModParams, color = "black") +
-  geom_segment(aes(x = 166.2 - 0, y = 0 + offsetAxis, xend = 166.2 - 0, yend = 0.1 + offsetAxis), size = 2*scaleFigModParams, color = "black") + 
-  geom_text(aes(label = "0", x = 166.2 - 0, y = -0.2 + offsetAxis), size = 16*scaleFigModParams, color = "black") + 
-  geom_segment(aes(x = 166.2 - 25, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 25, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
-  geom_text(aes(label = "-25", x = 166.2 - 25, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
-  geom_segment(aes(x = 166.2 - 50, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 50, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
-  geom_text(aes(label = "-50", x = 166.2 - 50, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
-  geom_segment(aes(x = 166.2 - 75, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 75, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
-  geom_text(aes(label = "-75", x = 166.2 - 75, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
-  geom_segment(aes(x = 166.2 - 100, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 100, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
-  geom_text(aes(label = "-100", x = 166.2 - 100, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
-  geom_segment(aes(x = 166.2 - 125, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 125, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") + 
-  geom_text(aes(label = "-125", x = 166.2 - 125, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_segment(aes(x = 166.2 - 0, y = 0 + offsetAxis, xend = 166.2 - 0, yend = 0.1 + offsetAxis), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "0", x = 166.2 - 0, y = -0.2 + offsetAxis), size = 16*scaleFigModParams, color = "black") +
+  geom_segment(aes(x = 166.2 - 25, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 25, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "-25", x = 166.2 - 25, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") +
+  geom_segment(aes(x = 166.2 - 50, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 50, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "-50", x = 166.2 - 50, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") +
+  geom_segment(aes(x = 166.2 - 75, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 75, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "-75", x = 166.2 - 75, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") +
+  geom_segment(aes(x = 166.2 - 100, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 100, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "-100", x = 166.2 - 100, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") +
+  geom_segment(aes(x = 166.2 - 125, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 125, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
+  geom_text(aes(label = "-125", x = 166.2 - 125, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") +
   geom_segment(aes(x = 166.2 - 150, y = (0 + offsetAxis)*scaleFigModParams, xend = 166.2 - 150, yend = (0.1 + offsetAxis)*scaleFigModParams), size = 2*scaleFigModParams, color = "black") +
-  geom_text(aes(label = "-150", x = 166.2 - 150, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") + 
+  geom_text(aes(label = "-150", x = 166.2 - 150, y = (-0.2 + offsetAxis)*scaleFigModParams), size = 16*scaleFigModParams, color = "black") +
   geom_text(aes(label = "Time  [Ma]", x = 166.2 - 82, y = (-0.5 + offsetAxis)*scaleFigModParams), size = 18*scaleFigModParams, color = "black") +
   theme_transparent()
 pl
