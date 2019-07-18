@@ -25,6 +25,7 @@ The easiest way to install this package is to use the function `install_github()
 devtools::install_github("venelin/MGPMMammals")
 ```
 
+
 ## License 
 
 All R and Rmd code files in MGPMMammals are distributed under the terms of the 

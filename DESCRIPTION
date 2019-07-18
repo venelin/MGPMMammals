@@ -1,7 +1,7 @@
 Package: MGPMMammals
 Type: Package
 Title: A Mixed Gaussian Phylogenetic Model of the Brain-Body Mass Allometry in Mammals
-Version: 0.1.0
+Version: 1.0.0
 Authors@R: c(person("Venelin", "Mitov", email = "vmitov@gmail.com",
                  role = c("aut", "cre", "cph")))
 Maintainer: Venelin Mitov <vmitov@gmail.com>

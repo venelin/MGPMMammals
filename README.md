@@ -74,7 +74,7 @@ print(citation("MGPMMammals"), bibtex = TRUE)
 #>   Mitov, V., Bartoszek, K., & Stadler, T. (2019). Automatic
 #>   generation of evolutionary hypotheses using mixed Gaussian
 #>   phylogenetic models. Proceedings of the National Academy of
-#>   Sciences of the United States of America, in-press, 201813823.
+#>   Sciences of the United States of America, in-press,
 #>   http://doi.org/10.1073/pnas.1813823116
 #> 
 #> A BibTeX entry for LaTeX users is
@@ -133,8 +133,7 @@ print(citation("MGPMMammals"), bibtex = TRUE)
 #> A BibTeX entry for LaTeX users is
 #> 
 #>   @Article{,
-#>     title = {Data from: Comparative analysis of encephalization in mammals reveals relaxed constraints
-#> #' on anthropoid primate and cetacean brain scaling.},
+#>     title = {Data from: Comparative analysis of encephalization in mammals reveals relaxed constraints  on anthropoid primate and cetacean brain scaling.},
 #>     author = {{Boddy} and A. M. and {McGowen} and M. R. and {Sherwood} and C. C. and {Grossman} and L. I. and {Goodman} and {M.} and & Wildman and D. E.},
 #>     journal = {Dryad Digital Repository},
 #>     year = {2012},
