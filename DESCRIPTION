@@ -9,7 +9,7 @@ Description: Contains the code and fitted models of the mammal data analysis for
   the research article entitled "Automatic Generation of Evolutionary Hypotheses 
   using Mixed Gaussian Phylogenetic Models".
 Encoding: UTF-8
-License: GPL (>= 3.0)
+License: Please, read the section License in the package README.Rmd file or in the package web-page https://venelin.github.io/MGPMMammals/index.html.
 LazyData: true
 Depends:
     R (>= 3.1.0),

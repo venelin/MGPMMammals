@@ -1,0 +1,72 @@
+citHeader("If you use R-code or analysis results from MGPMMammals in publications, please cite the first one of the three articles below. If you use the mammal tree, please, also cite the second article below. If you use brain- and body-mass data from mammal species, please, also cite the third and the fourth articles below.")
+
+citEntry(
+  entry    = "Article",
+  title    = "Automatic generation of evolutionary hypotheses using mixed Gaussian phylogenetic models",
+  author   = "Venelin Mitov, Krzysztof Bartoszek, Tanja Stadler",
+  journal  = "Proceedings of the National Academy of Sciences of the United States of America",
+  year     = 2019,
+  volume   = "",
+  number   = "",
+  pages    = "",
+  url      = "https://www.pnas.org/lookup/doi/10.1073/pnas.1813823116",
+  textVersion = paste(
+"Mitov, V., Bartoszek, K., & Stadler, T. (2019). Automatic generation of evolutionary",
+"hypotheses using mixed Gaussian phylogenetic models. Proceedings of the National",
+"Academy of Sciences of the United States of America, in-press, ",
+"http://doi.org/10.1073/pnas.1813823116"
+  )
+)
+
+citEntry(
+  entry    = "Article",
+  title    = "The delayed rise of present-day mammals",
+  author   = "Bininda-Emonds, O. R. P., Cardillo, M., Jones, K. E., MacPhee, R. D. E., Beck, R. M. D., Grenyer, R., et al",
+  journal  = "Nature",
+  year     = 2007,
+  volume   = 446,
+  number   = 7135,
+  pages    = "507–512",
+  url      = "http://www.nature.com/doifinder/10.1038/nature05634",
+  textVersion = paste(
+    "Bininda-Emonds, O. R. P., Cardillo, M., Jones, K. E.,",
+    "MacPhee, R. D. E., Beck, R. M. D., Grenyer, R., et al. (2007).",
+    "The delayed rise of present-day mammals. Nature, 446(7135), 507–512.")
+)
+
+
+citEntry(
+  entry    = "Article",
+  title    = "Comparative analysis of encephalization in mammals reveals relaxed constraints on anthropoid primate and cetacean brain scaling",
+  author   = "Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I., Goodman, M., & Wildman, D. E.",
+  journal  = "Journal of Evolutionary Biology",
+  year     = 2012,
+  volume   = 25,
+  number   = 5,
+  pages    = "981-994",
+  url      = "http://doi.org/10.1111/j.1420-9101.2012.02491.x",
+  textVersion = paste(
+    "Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I., Goodman, M., & Wildman, D. E. (2012).",
+    "Comparative analysis of encephalization in mammals reveals relaxed constraints on anthropoid primate and cetacean brain scaling.",
+    "Journal of Evolutionary Biology",
+    "25(5), 981–994. http://doi.org/10.1111/j.1420-9101.2012.02491.x"
+    )
+)
+
+citEntry(
+  entry    = "Article",
+  title    = "Data from: Comparative analysis of encephalization in mammals reveals relaxed constraints  on anthropoid primate and cetacean brain scaling.",
+  author   = "Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I., Goodman, M., & Wildman, D. E.",
+  journal  = "Dryad Digital Repository",
+  year     = 2012,
+  volume   = "",
+  number   = "",
+  pages    = "",
+  url      = "https://doi.org/10.5061/dryad.5kh0b362",
+  textVersion = paste(
+    "Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I., Goodman, M., & Wildman, D. E. (2012).",
+    "Data from: Comparative analysis of encephalization in mammals reveals relaxed constraints on anthropoid primate and cetacean brain scaling.",
+    "Dryad Digital Repository",
+    "https://doi.org/10.5061/dryad.5kh0b362"
+    )
+)

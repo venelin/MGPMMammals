@@ -1,3 +1,14 @@
+# Copyright 2019 Venelin Mitov
+#
+# This file is part of MGPMMammals.
+#
+# MGPMMammals is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# For information on the MGPMMammals package including its license, please
+# read this web page: <https://venelin.github.io/MGPMMammals/index.html>.
+
 #' @export
 PCMParamLowerLimit.BM <- function(o, k, R, ...) {
   o <- NextMethod()
