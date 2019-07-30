@@ -817,6 +817,23 @@ inferredTreeHD <- bestFitToDataWithSEs$inferredTreeWithRealLabelsRegimesAndEpoch
 treeBackboneHD <- bestFitToDataWithSEs$inferredBackboneWithRealLabelsRegimesAndEpochsHD
 epochsHD <- bestFitToDataWithSEs$epochsHD
 
+# For validation purpose, we also compared the values from the best fit 
+# from calling PCMFitMappings. These revealed the same trend of gradually 
+# increasing regression slope. Uncommenting the following code will generate
+# this plot.
+#
+# inferredModel <- RetrieveBestFitScore(
+#    MGPMMammals::fitMappings_MGPM_A_F_best_clade_2_DataWithSEs, rank = 25)$inferredModel
+# inferredMapping <- attr(inferredModel, "mapping")
+# inferredTreeHD <- attr(inferredModel, "tree")
+# PCMTreeSetLabels(inferredTreeHD, PCMTreeGetLabels(tree))
+# epochsHD <- seq(0.2, max(PCMTreeNodeTimes(inferredTreeHD)), by = 2)
+# for(epoch in epochsHD) {
+#   inferredTreeHD <-
+#     PCMTreeInsertSingletonsAtEpoch(inferredTreeHD, epoch, minLength = 0.2)
+# }
+# treeBackboneHD <- PCMTreeBackbonePartition(inferredTreeHD)
+
 tableBSFits <- fits_bootstrap_MGPM_A_F_best_clade_RR_HD[!is.na(logLik)] # & logLik > logLikSimulatedModel
         
 
