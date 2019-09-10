@@ -60,6 +60,12 @@ SEsPPCA <- do.call(
 fitBMB_rotated <- fitBMB
 
 fitBMB_rotated$X0[] <- 0
+
+# Note that, here the call to chol works because it is equivalent to calling
+# sqrt because the rotated matrix is diagonal. If the rotated matrix was not
+# diagonal, one should have called the function PCMBase::UpperChol. This
+# function, however was implemented in PCMBase v1.2.10 and was not available at
+# the time of writing this script.
 fitBMB_rotated$`1`$Sigma_x[,,1] <- chol(
   t(V) %*% fitBMB$`1`$Sigma_x[,,1] %*% t(fitBMB$`1`$Sigma_x[,,1]) %*% V)
 
