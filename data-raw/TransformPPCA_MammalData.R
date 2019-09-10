@@ -48,7 +48,12 @@ SEsPPCA <- do.call(
     if(VE[2,2] == 0) {
       VE[2,2] <- 0.0001
     }
-    unname(chol(t(V) %*% VE %*% V))
+    if(packageVersion("PCMBase") >= "1.2.10") {
+      unname(UpperChol(t(V) %*% VE %*% V))
+    } else {
+      unname(chol(t(V) %*% VE %*% V))
+    }
+
   }), list(along = 3)))
 
 
