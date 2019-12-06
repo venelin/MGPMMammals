@@ -78,8 +78,8 @@
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<p>The easiest way to install this package is to use the function <code>install_github()</code> from the R-package devtools. The following command will install the most up-to-date version of the master branch from the github repository of the package.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">devtools<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/reexports">install_github</a></span>(<span class="st">"venelin/MGPMMammals"</span>)</a></code></pre></div>
+<p>The easiest way to install this package is to use the function <code>install_github()</code> from the R-package devtools. The following command will install the most recent version of the master branch from the github repository of the package.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">devtools<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/remote-reexports">install_github</a></span>(<span class="st">"venelin/MGPMMammals"</span>)</a></code></pre></div>
 </div>
 <div id="license" class="section level2">
 <h2 class="hasAnchor">
@@ -95,7 +95,7 @@
 <h2 class="hasAnchor">
 <a href="#citing-mgpmmammals" class="anchor"></a>Citing MGPMMammals</h2>
 <p>Please, read the following:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/print">print</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/citation">citation</a></span>(<span class="st">"MGPMMammals"</span>), <span class="dt">bibtex =</span> <span class="ot">TRUE</span>)</a>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/print">print</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/citation">citation</a></span>(<span class="st">"MGPMMammals"</span>))</a>
 <a class="sourceLine" id="cb2-2" data-line-number="2"><span class="co">#&gt; </span></a>
 <a class="sourceLine" id="cb2-3" data-line-number="3"><span class="co">#&gt; If you use R-code or analysis results from MGPMMammals in</span></a>
 <a class="sourceLine" id="cb2-4" data-line-number="4"><span class="co">#&gt; publications, please cite the first one of the three articles</span></a>
@@ -110,68 +110,26 @@
 <a class="sourceLine" id="cb2-13" data-line-number="13"><span class="co">#&gt;   Sciences of the United States of America, in-press,</span></a>
 <a class="sourceLine" id="cb2-14" data-line-number="14"><span class="co">#&gt;   http://doi.org/10.1073/pnas.1813823116</span></a>
 <a class="sourceLine" id="cb2-15" data-line-number="15"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-16" data-line-number="16"><span class="co">#&gt; A BibTeX entry for LaTeX users is</span></a>
-<a class="sourceLine" id="cb2-17" data-line-number="17"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-18" data-line-number="18"><span class="co">#&gt;   @Article{,</span></a>
-<a class="sourceLine" id="cb2-19" data-line-number="19"><span class="co">#&gt;     title = {Automatic generation of evolutionary hypotheses using mixed Gaussian phylogenetic models},</span></a>
-<a class="sourceLine" id="cb2-20" data-line-number="20"><span class="co">#&gt;     author = {Venelin Mitov and Krzysztof Bartoszek and Tanja Stadler},</span></a>
-<a class="sourceLine" id="cb2-21" data-line-number="21"><span class="co">#&gt;     journal = {Proceedings of the National Academy of Sciences of the United States of America},</span></a>
-<a class="sourceLine" id="cb2-22" data-line-number="22"><span class="co">#&gt;     year = {2019},</span></a>
-<a class="sourceLine" id="cb2-23" data-line-number="23"><span class="co">#&gt;     url = {https://www.pnas.org/lookup/doi/10.1073/pnas.1813823116},</span></a>
-<a class="sourceLine" id="cb2-24" data-line-number="24"><span class="co">#&gt;   }</span></a>
-<a class="sourceLine" id="cb2-25" data-line-number="25"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-26" data-line-number="26"><span class="co">#&gt;   Bininda-Emonds, O. R. P., Cardillo, M., Jones, K. E., MacPhee,</span></a>
-<a class="sourceLine" id="cb2-27" data-line-number="27"><span class="co">#&gt;   R. D. E., Beck, R. M. D., Grenyer, R., et al. (2007). The</span></a>
-<a class="sourceLine" id="cb2-28" data-line-number="28"><span class="co">#&gt;   delayed rise of present-day mammals. Nature, 446(7135), 507–512.</span></a>
-<a class="sourceLine" id="cb2-29" data-line-number="29"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-30" data-line-number="30"><span class="co">#&gt; A BibTeX entry for LaTeX users is</span></a>
-<a class="sourceLine" id="cb2-31" data-line-number="31"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-32" data-line-number="32"><span class="co">#&gt;   @Article{,</span></a>
-<a class="sourceLine" id="cb2-33" data-line-number="33"><span class="co">#&gt;     title = {The delayed rise of present-day mammals},</span></a>
-<a class="sourceLine" id="cb2-34" data-line-number="34"><span class="co">#&gt;     author = {{Bininda-Emonds} and O. R. P. and {Cardillo} and {M.} and {Jones} and K. E. and {MacPhee} and R. D. E. and {Beck} and R. M. D. and {Grenyer} and {R.} and et al},</span></a>
-<a class="sourceLine" id="cb2-35" data-line-number="35"><span class="co">#&gt;     journal = {Nature},</span></a>
-<a class="sourceLine" id="cb2-36" data-line-number="36"><span class="co">#&gt;     year = {2007},</span></a>
-<a class="sourceLine" id="cb2-37" data-line-number="37"><span class="co">#&gt;     volume = {446},</span></a>
-<a class="sourceLine" id="cb2-38" data-line-number="38"><span class="co">#&gt;     number = {7135},</span></a>
-<a class="sourceLine" id="cb2-39" data-line-number="39"><span class="co">#&gt;     pages = {507–512},</span></a>
-<a class="sourceLine" id="cb2-40" data-line-number="40"><span class="co">#&gt;     url = {http://www.nature.com/doifinder/10.1038/nature05634},</span></a>
-<a class="sourceLine" id="cb2-41" data-line-number="41"><span class="co">#&gt;   }</span></a>
-<a class="sourceLine" id="cb2-42" data-line-number="42"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-43" data-line-number="43"><span class="co">#&gt;   Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I.,</span></a>
-<a class="sourceLine" id="cb2-44" data-line-number="44"><span class="co">#&gt;   Goodman, M., &amp; Wildman, D. E. (2012). Comparative analysis of</span></a>
-<a class="sourceLine" id="cb2-45" data-line-number="45"><span class="co">#&gt;   encephalization in mammals reveals relaxed constraints on</span></a>
-<a class="sourceLine" id="cb2-46" data-line-number="46"><span class="co">#&gt;   anthropoid primate and cetacean brain scaling. Journal of</span></a>
-<a class="sourceLine" id="cb2-47" data-line-number="47"><span class="co">#&gt;   Evolutionary Biology 25(5), 981–994.</span></a>
-<a class="sourceLine" id="cb2-48" data-line-number="48"><span class="co">#&gt;   http://doi.org/10.1111/j.1420-9101.2012.02491.x</span></a>
-<a class="sourceLine" id="cb2-49" data-line-number="49"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-50" data-line-number="50"><span class="co">#&gt; A BibTeX entry for LaTeX users is</span></a>
-<a class="sourceLine" id="cb2-51" data-line-number="51"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-52" data-line-number="52"><span class="co">#&gt;   @Article{,</span></a>
-<a class="sourceLine" id="cb2-53" data-line-number="53"><span class="co">#&gt;     title = {Comparative analysis of encephalization in mammals reveals relaxed constraints on anthropoid primate and cetacean brain scaling},</span></a>
-<a class="sourceLine" id="cb2-54" data-line-number="54"><span class="co">#&gt;     author = {{Boddy} and A. M. and {McGowen} and M. R. and {Sherwood} and C. C. and {Grossman} and L. I. and {Goodman} and {M.} and &amp; Wildman and D. E.},</span></a>
-<a class="sourceLine" id="cb2-55" data-line-number="55"><span class="co">#&gt;     journal = {Journal of Evolutionary Biology},</span></a>
-<a class="sourceLine" id="cb2-56" data-line-number="56"><span class="co">#&gt;     year = {2012},</span></a>
-<a class="sourceLine" id="cb2-57" data-line-number="57"><span class="co">#&gt;     volume = {25},</span></a>
-<a class="sourceLine" id="cb2-58" data-line-number="58"><span class="co">#&gt;     number = {5},</span></a>
-<a class="sourceLine" id="cb2-59" data-line-number="59"><span class="co">#&gt;     pages = {981-994},</span></a>
-<a class="sourceLine" id="cb2-60" data-line-number="60"><span class="co">#&gt;     url = {http://doi.org/10.1111/j.1420-9101.2012.02491.x},</span></a>
-<a class="sourceLine" id="cb2-61" data-line-number="61"><span class="co">#&gt;   }</span></a>
-<a class="sourceLine" id="cb2-62" data-line-number="62"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-63" data-line-number="63"><span class="co">#&gt;   Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I.,</span></a>
-<a class="sourceLine" id="cb2-64" data-line-number="64"><span class="co">#&gt;   Goodman, M., &amp; Wildman, D. E. (2012). Data from: Comparative</span></a>
-<a class="sourceLine" id="cb2-65" data-line-number="65"><span class="co">#&gt;   analysis of encephalization in mammals reveals relaxed</span></a>
-<a class="sourceLine" id="cb2-66" data-line-number="66"><span class="co">#&gt;   constraints on anthropoid primate and cetacean brain scaling.</span></a>
-<a class="sourceLine" id="cb2-67" data-line-number="67"><span class="co">#&gt;   Dryad Digital Repository https://doi.org/10.5061/dryad.5kh0b362</span></a>
-<a class="sourceLine" id="cb2-68" data-line-number="68"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-69" data-line-number="69"><span class="co">#&gt; A BibTeX entry for LaTeX users is</span></a>
-<a class="sourceLine" id="cb2-70" data-line-number="70"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-71" data-line-number="71"><span class="co">#&gt;   @Article{,</span></a>
-<a class="sourceLine" id="cb2-72" data-line-number="72"><span class="co">#&gt;     title = {Data from: Comparative analysis of encephalization in mammals reveals relaxed constraints  on anthropoid primate and cetacean brain scaling.},</span></a>
-<a class="sourceLine" id="cb2-73" data-line-number="73"><span class="co">#&gt;     author = {{Boddy} and A. M. and {McGowen} and M. R. and {Sherwood} and C. C. and {Grossman} and L. I. and {Goodman} and {M.} and &amp; Wildman and D. E.},</span></a>
-<a class="sourceLine" id="cb2-74" data-line-number="74"><span class="co">#&gt;     journal = {Dryad Digital Repository},</span></a>
-<a class="sourceLine" id="cb2-75" data-line-number="75"><span class="co">#&gt;     year = {2012},</span></a>
-<a class="sourceLine" id="cb2-76" data-line-number="76"><span class="co">#&gt;     url = {https://doi.org/10.5061/dryad.5kh0b362},</span></a>
-<a class="sourceLine" id="cb2-77" data-line-number="77"><span class="co">#&gt;   }</span></a></code></pre></div>
+<a class="sourceLine" id="cb2-16" data-line-number="16"><span class="co">#&gt;   Bininda-Emonds, O. R. P., Cardillo, M., Jones, K. E., MacPhee,</span></a>
+<a class="sourceLine" id="cb2-17" data-line-number="17"><span class="co">#&gt;   R. D. E., Beck, R. M. D., Grenyer, R., et al. (2007). The</span></a>
+<a class="sourceLine" id="cb2-18" data-line-number="18"><span class="co">#&gt;   delayed rise of present-day mammals. Nature, 446(7135), 507–512.</span></a>
+<a class="sourceLine" id="cb2-19" data-line-number="19"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb2-20" data-line-number="20"><span class="co">#&gt;   Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I.,</span></a>
+<a class="sourceLine" id="cb2-21" data-line-number="21"><span class="co">#&gt;   Goodman, M., &amp; Wildman, D. E. (2012). Comparative analysis of</span></a>
+<a class="sourceLine" id="cb2-22" data-line-number="22"><span class="co">#&gt;   encephalization in mammals reveals relaxed constraints on</span></a>
+<a class="sourceLine" id="cb2-23" data-line-number="23"><span class="co">#&gt;   anthropoid primate and cetacean brain scaling. Journal of</span></a>
+<a class="sourceLine" id="cb2-24" data-line-number="24"><span class="co">#&gt;   Evolutionary Biology 25(5), 981–994.</span></a>
+<a class="sourceLine" id="cb2-25" data-line-number="25"><span class="co">#&gt;   http://doi.org/10.1111/j.1420-9101.2012.02491.x</span></a>
+<a class="sourceLine" id="cb2-26" data-line-number="26"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb2-27" data-line-number="27"><span class="co">#&gt;   Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I.,</span></a>
+<a class="sourceLine" id="cb2-28" data-line-number="28"><span class="co">#&gt;   Goodman, M., &amp; Wildman, D. E. (2012). Data from: Comparative</span></a>
+<a class="sourceLine" id="cb2-29" data-line-number="29"><span class="co">#&gt;   analysis of encephalization in mammals reveals relaxed</span></a>
+<a class="sourceLine" id="cb2-30" data-line-number="30"><span class="co">#&gt;   constraints on anthropoid primate and cetacean brain scaling.</span></a>
+<a class="sourceLine" id="cb2-31" data-line-number="31"><span class="co">#&gt;   Dryad Digital Repository https://doi.org/10.5061/dryad.5kh0b362</span></a>
+<a class="sourceLine" id="cb2-32" data-line-number="32"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb2-33" data-line-number="33"><span class="co">#&gt; To see these entries in BibTeX format, use 'print(&lt;citation&gt;,</span></a>
+<a class="sourceLine" id="cb2-34" data-line-number="34"><span class="co">#&gt; bibtex=TRUE)', 'toBibtex(.)', or set</span></a>
+<a class="sourceLine" id="cb2-35" data-line-number="35"><span class="co">#&gt; 'options(citation.bibtex.max=999)'.</span></a></code></pre></div>
 </div>
 <div id="further-information" class="section level2">
 <h2 class="hasAnchor">
