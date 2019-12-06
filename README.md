@@ -11,7 +11,7 @@ mammal dataset in the research article (Mitov, Bartoszek, and Stadler
 
 The easiest way to install this package is to use the function
 `install_github()` from the R-package devtools. The following command
-will install the most up-to-date version of the master branch from the
+will install the most recent version of the master branch from the
 github repository of the package.
 
 ``` r
@@ -62,7 +62,7 @@ Special terms apply to the following data-files and objects:
 Please, read the following:
 
 ``` r
-print(citation("MGPMMammals"), bibtex = TRUE)
+print(citation("MGPMMammals"))
 #> 
 #> If you use R-code or analysis results from MGPMMammals in
 #> publications, please cite the first one of the three articles
@@ -77,32 +77,9 @@ print(citation("MGPMMammals"), bibtex = TRUE)
 #>   Sciences of the United States of America, in-press,
 #>   http://doi.org/10.1073/pnas.1813823116
 #> 
-#> A BibTeX entry for LaTeX users is
-#> 
-#>   @Article{,
-#>     title = {Automatic generation of evolutionary hypotheses using mixed Gaussian phylogenetic models},
-#>     author = {Venelin Mitov and Krzysztof Bartoszek and Tanja Stadler},
-#>     journal = {Proceedings of the National Academy of Sciences of the United States of America},
-#>     year = {2019},
-#>     url = {https://www.pnas.org/lookup/doi/10.1073/pnas.1813823116},
-#>   }
-#> 
 #>   Bininda-Emonds, O. R. P., Cardillo, M., Jones, K. E., MacPhee,
 #>   R. D. E., Beck, R. M. D., Grenyer, R., et al. (2007). The
 #>   delayed rise of present-day mammals. Nature, 446(7135), 507–512.
-#> 
-#> A BibTeX entry for LaTeX users is
-#> 
-#>   @Article{,
-#>     title = {The delayed rise of present-day mammals},
-#>     author = {{Bininda-Emonds} and O. R. P. and {Cardillo} and {M.} and {Jones} and K. E. and {MacPhee} and R. D. E. and {Beck} and R. M. D. and {Grenyer} and {R.} and et al},
-#>     journal = {Nature},
-#>     year = {2007},
-#>     volume = {446},
-#>     number = {7135},
-#>     pages = {507–512},
-#>     url = {http://www.nature.com/doifinder/10.1038/nature05634},
-#>   }
 #> 
 #>   Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I.,
 #>   Goodman, M., & Wildman, D. E. (2012). Comparative analysis of
@@ -111,34 +88,15 @@ print(citation("MGPMMammals"), bibtex = TRUE)
 #>   Evolutionary Biology 25(5), 981–994.
 #>   http://doi.org/10.1111/j.1420-9101.2012.02491.x
 #> 
-#> A BibTeX entry for LaTeX users is
-#> 
-#>   @Article{,
-#>     title = {Comparative analysis of encephalization in mammals reveals relaxed constraints on anthropoid primate and cetacean brain scaling},
-#>     author = {{Boddy} and A. M. and {McGowen} and M. R. and {Sherwood} and C. C. and {Grossman} and L. I. and {Goodman} and {M.} and & Wildman and D. E.},
-#>     journal = {Journal of Evolutionary Biology},
-#>     year = {2012},
-#>     volume = {25},
-#>     number = {5},
-#>     pages = {981-994},
-#>     url = {http://doi.org/10.1111/j.1420-9101.2012.02491.x},
-#>   }
-#> 
 #>   Boddy, A. M., McGowen, M. R., Sherwood, C. C., Grossman, L. I.,
 #>   Goodman, M., & Wildman, D. E. (2012). Data from: Comparative
 #>   analysis of encephalization in mammals reveals relaxed
 #>   constraints on anthropoid primate and cetacean brain scaling.
 #>   Dryad Digital Repository https://doi.org/10.5061/dryad.5kh0b362
 #> 
-#> A BibTeX entry for LaTeX users is
-#> 
-#>   @Article{,
-#>     title = {Data from: Comparative analysis of encephalization in mammals reveals relaxed constraints  on anthropoid primate and cetacean brain scaling.},
-#>     author = {{Boddy} and A. M. and {McGowen} and M. R. and {Sherwood} and C. C. and {Grossman} and L. I. and {Goodman} and {M.} and & Wildman and D. E.},
-#>     journal = {Dryad Digital Repository},
-#>     year = {2012},
-#>     url = {https://doi.org/10.5061/dryad.5kh0b362},
-#>   }
+#> To see these entries in BibTeX format, use 'print(<citation>,
+#> bibtex=TRUE)', 'toBibtex(.)', or set
+#> 'options(citation.bibtex.max=999)'.
 ```
 
 ## Further information

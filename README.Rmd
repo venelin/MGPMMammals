@@ -19,7 +19,7 @@ This R-package contains the data and the R-code for the analysis of the mammal d
 
 ## Installation
 
-The easiest way to install this package is to use the function `install_github()` from the R-package devtools. The following command will install the most up-to-date version of the master branch from the github repository of the package. 
+The easiest way to install this package is to use the function `install_github()` from the R-package devtools. The following command will install the most recent version of the master branch from the github repository of the package. 
 
 ```{r, eval=FALSE}
 devtools::install_github("venelin/MGPMMammals")
@@ -59,7 +59,7 @@ accompanying data-package [@Boddy:2012bd]. If you reuse any of these data object
 ## Citing MGPMMammals
 Please, read the following:
 ```{r}
-print(citation("MGPMMammals"), bibtex = TRUE)
+print(citation("MGPMMammals"))
 ```
 
 ## Further information
